@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Bakes and Bites</title>
+  <link rel="stylesheet" href="body.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🍞</span>
+      <span class="brand-name">Bakes &amp; Bites</span>
+      <span class="brand-sub">Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link active" data-panel="dashboard">
+        <i class="fa-solid fa-gauge-high"></i> Dashboard
+      </a>
+      <a href="#" class="sidebar-link" data-panel="orders">
+        <i class="fa-solid fa-receipt"></i> Orders
+        <span class="sidebar-badge" id="pending-badge">0</span>
+      </a>
+      <a href="#" class="sidebar-link" data-panel="delivery">
+        <i class="fa-solid fa-truck-fast"></i> Delivery Control
+      </a>
+      <a href="#" class="sidebar-link" data-panel="menu-mgr">
+        <i class="fa-solid fa-utensils"></i> Menu Manager
+      </a>
+      <a href="#" class="sidebar-link" data-panel="stock">
+        <i class="fa-solid fa-boxes-stacked"></i> Stock
+      </a>
+      <a href="#" class="sidebar-link" data-panel="analytics">
+        <i class="fa-solid fa-chart-line"></i> Analytics
+      </a>
+      <a href="#" class="sidebar-link" data-panel="slider-mgr">
+        <i class="fa-solid fa-images"></i> Slider Images
+      </a>
+      <a href="#" class="sidebar-link" data-panel="notifications">
+        <i class="fa-solid fa-bell"></i> Notifications
+        <span class="sidebar-badge notif-count" id="sidebar-notif-count">0</span>
+      </a>
+    </nav>
+    <a href="index.html" class="sidebar-back-btn">← Back to Site</a>
+  </aside>
+
+  <!-- Mobile sidebar toggle -->
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+
+  <!-- Main content -->
+  <main class="admin-main" id="admin-main">
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <section class="admin-panel active" id="panel-dashboard">
+      <div class="panel-header">
+        <h1>Dashboard</h1>
+        <span class="panel-sub" id="dash-date"></span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8a838">📦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-total-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#2ecc71">💰</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-revenue">KSh 0</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e74c3c">⏳</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-label">Pending Orders</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#3498db">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-delivered">0</div>
+            <div class="stat-label">Delivered</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#9b59b6">👁️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-views">0</div>
+            <div class="stat-label">Page Views</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e67e22">🛒</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-confirmed-rev">KSh 0</div>
+            <div class="stat-label">Confirmed Revenue</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="admin-card">
+        <div class="card-header">
+          <h2>Recent Orders</h2>
+          <button class="btn-gold" onclick="switchPanel('orders')">View All</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table" id="dash-recent-orders">
+            <thead>
+              <tr>
+                <th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Time</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Low Stock Alert -->
+      <div class="admin-card" id="low-stock-card">
+        <div class="card-header"><h2>⚠️ Low Stock Alerts</h2></div>
+        <div id="low-stock-list"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ ORDERS ══════════════ -->
+    <section class="admin-panel" id="panel-orders">
+      <div class="panel-header">
+        <h1>All Orders</h1>
+        <div class="header-controls">
+          <select id="order-filter" class="admin-select">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Preparing">Preparing</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <input type="text" id="order-search" class="admin-input" placeholder="Search by ID or name...">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th><th>Customer</th><th>Location</th><th>Items</th>
+              <th>Total</th><th>Status</th><th>Instructions</th><th>Time</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════ DELIVERY CONTROL ══════════════ -->
+    <section class="admin-panel" id="panel-delivery">
+      <div class="panel-header"><h1>Delivery Control Panel</h1></div>
+
+      <div class="delivery-grid" id="delivery-grid">
+        <!-- Cards rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ══════════════ MENU MANAGER ══════════════ -->
+    <section class="admin-panel" id="panel-menu-mgr">
+      <div class="panel-header">
+        <h1>Menu Manager</h1>
+        <button class="btn-gold" id="add-menu-item-btn">+ Add Item</button>
+      </div>
+
+      <!-- Add item form -->
+      <div class="admin-card" id="add-item-form" style="display:none">
+        <h3>Add New Menu Item</h3>
+        <div class="form-row">
+          <label>Category</label>
+          <select id="new-item-cat" class="admin-select">
+            <option value="fast-food">Fast Food</option>
+            <option value="quick-bites">Quick Bites</option>
+            <option value="bakery">Bakery</option>
+            <option value="special">Special Orders</option>
+            <option value="drinks">Drinks</option>
+            <option value="combos">Combo Deals</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Item Name</label>
+          <input type="text" id="new-item-name" class="admin-input" placeholder="e.g. Spicy Burger">
+        </div>
+        <div class="form-row">
+          <label>Price (KSh) — leave blank for custom</label>
+          <input type="number" id="new-item-price" class="admin-input" placeholder="e.g. 350">
+        </div>
+        <div class="form-actions">
+          <button class="btn-gold" id="save-new-item">Save Item</button>
+          <button class="btn-outline" id="cancel-new-item">Cancel</button>
+        </div>
+      </div>
+
+      <div id="menu-mgr-list"></div>
+    </section>
+
+    <!-- ══════════════ STOCK ══════════════ -->
+    <section class="admin-panel" id="panel-stock">
+      <div class="panel-header">
+        <h1>Stock Management</h1>
+        <button class="btn-gold" id="save-stock-btn">💾 Save Changes</button>
+      </div>
+      <div class="admin-card">
+        <div class="table-wrap">
+          <table class="admin-table" id="stock-table">
+            <thead>
+              <tr><th>Item</th><th>Category</th><th>Stock (units)</th><th>Status</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ ANALYTICS ══════════════ -->
+    <section class="admin-panel" id="panel-analytics">
+      <div class="panel-header"><h1>Analytics</h1></div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#3498db">👁️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="an-views">0</div>
+            <div class="stat-label">Total Page Views</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e8a838">🛒</div>
+          <div class="stat-info">
+            <div class="stat-value" id="an-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#2ecc71">💰</div>
+          <div class="stat-info">
+            <div class="stat-value" id="an-revenue">KSh 0</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#9b59b6">📦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="an-avg">KSh 0</div>
+            <div class="stat-label">Avg Order Value</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Top Selling Items</h2>
+        <div id="top-items-list"></div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Orders by Status</h2>
+        <div id="status-breakdown"></div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Revenue by Location</h2>
+        <div id="location-breakdown"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ SLIDER MANAGER ══════════════ -->
+    <section class="admin-panel" id="panel-slider-mgr">
+      <div class="panel-header">
+        <h1>Slider Image Manager</h1>
+      </div>
+      <div class="admin-card">
+        <p style="color:var(--gold-light);margin-bottom:14px;">
+          Enter image filenames (must be in the same folder as index.html). Default images come from the site code.
+        </p>
+        <div id="slider-img-list"></div>
+        <div class="form-row" style="margin-top:16px;">
+          <input type="text" id="new-slider-img" class="admin-input" placeholder="e.g. NewDish.jpg">
+          <button class="btn-gold" id="add-slider-img-btn">+ Add Image</button>
+        </div>
+        <p style="color:rgba(253,240,220,0.5);font-size:0.8rem;margin-top:8px;">
+          Note: Custom slider images added here are stored in the database. The default images in the HTML are always shown first.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ NOTIFICATIONS ══════════════ -->
+    <section class="admin-panel" id="panel-notifications">
+      <div class="panel-header">
+        <h1>Notifications</h1>
+        <button class="btn-outline" id="mark-read-btn">Mark All Read</button>
+      </div>
+      <div id="notifications-list"></div>
+    </section>
+
+  </main>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" id="order-modal" style="display:none">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

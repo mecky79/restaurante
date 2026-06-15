@@ -1,0 +1,360 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bakes and Bites</title>
+  <link rel="stylesheet" href="body.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#about">About Us</a>
+    <a href="#contact">Contact Us</a>
+    <a href="#track">Track Order</a>
+    <a href="order.html" class="nav-order-btn" id="nav-order-link">My Order</a>
+    <a href="admin.html" class="nav-admin-btn" id="nav-admin-link">
+      Admin <span class="notif-badge" id="nav-notif-badge" style="display:none"></span>
+    </a>
+  </nav>
+
+  <!-- PAGE 1: Home -->
+  <section id="home">
+    <h1>BAKES AND BITES</h1>
+    <p>
+      Since 2017, Bakes and Bites has been more than a kitchen &mdash;
+      it's been a labor of love. Born from a passion for honest,
+      handcrafted food, we've spent years perfecting the art of turning
+      simple ingredients into moments worth savoring. Every dish we
+      prepare carries a single promise: that your appetite deserves
+      nothing less than the very best.
+    </p>
+
+    <div class="slider">
+      <img src="Chickenwings.jpg"   class="slide slide-active" alt="Chicken Wings">
+      <img src="Frenchfries.jpg"    class="slide" alt="French Fries">
+      <img src="Pizza.jpg"          class="slide" alt="Pizza">
+      <img src="Sausageroll2.jpg"   class="slide" alt="Sausage Roll">
+      <img src="Cupcakes.jpg"       class="slide" alt="Cupcakes">
+      <img src="Bcake.jpg"          class="slide" alt="Birthday Cake">
+      <img src="Slice-cake1.jpg"    class="slide" alt="Slice Cake">
+      <img src="Slice-cake2.jpg"    class="slide" alt="Slice Cake 2">
+      <img src="Cookies.jpg"        class="slide" alt="Cookies">
+      <img src="Freshjuice.jpg"     class="slide" alt="Fresh Juice">
+      <img src="Milkshake.jpg"      class="slide" alt="Milkshake">
+      <img src="Chickenfries.jpg"   class="slide" alt="Chicken Fries">
+      <img src="Friesandsoda.jpg"   class="slide" alt="Fries and Soda">
+      <img src="Ugalifish.jpg"      class="slide" alt="Ugali Fish">
+      <img src="Ricebeef.jpg"       class="slide" alt="Rice and Beef">
+      <img src="Ricebeans.jpg"      class="slide" alt="Rice and Beans">
+      <img src="Chapatibeans.jpg"   class="slide" alt="Chapati Beans">
+      <img src="Beefstew.jpg"       class="slide" alt="Beef Stew">
+    </div>
+  </section>
+
+  <!-- PAGE 2: About + Menu -->
+  <section id="about">
+    <h1>ABOUT US</h1>
+    <p>
+      From our ovens to your table, we believe good food is more than
+      a meal &mdash; it's a moment. Step in, slow down, and treat yourself
+      to flavors that are honest, comforting, and made entirely from scratch.
+    </p>
+
+    <div id="menu">
+
+      <div class="menu-row">
+        <div class="menu-img-wrapper">
+          <img src="fastfoods.webp" alt="Fast Food">
+        </div>
+        <div>
+          <h2>MENU</h2>
+          <h3>🍟 FAST FOOD</h3>
+          <ul>
+            <li>Classic Burger &mdash; KSh 250</li>
+            <li>Cheese Burger &mdash; KSh 300</li>
+            <li>Chicken Burger &mdash; KSh 320</li>
+            <li>Hot Dog (Loaded) &mdash; KSh 200</li>
+            <li>French Fries (Regular) &mdash; KSh 150</li>
+            <li>French Fries (Large) &mdash; KSh 250</li>
+            <li>Chicken Wings (6pcs) &mdash; KSh 400</li>
+            <li>Samosa (Beef/Chicken) &mdash; KSh 70 each</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="menu-row reverse">
+        <div class="menu-img-wrapper">
+          <img src="quickbites.webp" alt="Quick Bites">
+        </div>
+        <div>
+          <h3>🍕 QUICK BITES</h3>
+          <ul>
+            <li>Mini Pizza &mdash; KSh 350</li>
+            <li>Sausage Roll &mdash; KSh 120</li>
+            <li>Chicken Wrap &mdash; KSh 300</li>
+            <li>Chapati + Beans &mdash; KSh 200</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="menu-row">
+        <div class="menu-img-wrapper">
+          <img src="bakery.webp" alt="Bakery Treats">
+        </div>
+        <div>
+          <h3>🧁 BAKERY TREATS</h3>
+          <ul>
+            <li>Cupcakes (Vanilla/Chocolate) &mdash; KSh 100</li>
+            <li>Doughnuts (Glazed/Chocolate) &mdash; KSh 80</li>
+            <li>Slice Cake &mdash; KSh 150</li>
+            <li>Cookies (2 pcs) &mdash; KSh 100</li>
+            <li>Muffins &mdash; KSh 120</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="menu-row reverse">
+        <div class="menu-img-wrapper">
+          <img src="special.webp" alt="Special Orders">
+        </div>
+        <div>
+          <h3>🎂 SPECIAL ORDERS</h3>
+          <ul>
+            <li>Birthday Cakes (1kg+) &mdash; From KSh 1500</li>
+            <li>Custom Cakes &mdash; Price varies</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="menu-row">
+        <div class="menu-img-wrapper">
+          <img src="drinks.webp" alt="Drinks">
+        </div>
+        <div>
+          <h3>🥤 DRINKS</h3>
+          <ul>
+            <li>Soda (500ml) &mdash; KSh 100</li>
+            <li>Fresh Juice &mdash; KSh 150</li>
+            <li>Milkshake (Vanilla/Chocolate) &mdash; KSh 250</li>
+            <li>Tea/Coffee &mdash; KSh 80</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="menu-row reverse">
+        <div class="menu-img-wrapper">
+          <img src="combo.webp" alt="Combo Deals">
+        </div>
+        <div>
+          <h3>⭐ COMBO DEALS</h3>
+          <ul>
+            <li>Burger + Fries + Soda &mdash; KSh 450</li>
+            <li>Hot Dog + Juice &mdash; KSh 300</li>
+            <li>Chicken Wings + Fries + Soda &mdash; KSh 600</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="order-now">
+      <a href="order.html" id="order-now-link" class="page-transition-link">Place Your Order</a>
+    </div>
+
+    <!-- COMMENT SECTION -->
+    <fieldset id="comment-section">
+      <legend>💬 Leave a Comment</legend>
+      <label for="comment-author">Your Name</label>
+      <input type="text" id="comment-author" placeholder="e.g. Jane Doe">
+      <label for="comment-text">Your Comment</label>
+      <textarea id="comment-text" placeholder="Rate your experience with us..."></textarea>
+      <button type="button" class="submit-btn" id="comment-btn">Submit Comment</button>
+    </fieldset>
+
+    <!-- COMMENTS DISPLAY -->
+    <div id="comments-display">
+      <h3 style="color:var(--gold);margin-bottom:16px;">💬 What Our Customers Say</h3>
+      <div id="comments-list">
+        <p class="cart-empty">Be the first to leave a comment!</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- PAGE 3: Contact -->
+  <section id="contact">
+    <p>We also offer outside catering services.</p>
+    <p>For more info,</p>
+    <h1>CONTACT US</h1>
+
+    <a class="contact-box" href="https://wa.me/254110537670" target="_blank" rel="noopener">
+      <i class="fa-brands fa-square-whatsapp"></i>
+      <span>WhatsApp</span>
+    </a>
+
+    <a class="contact-box" href="tel:+254110537670">
+      <i class="fa-solid fa-phone-volume"></i>
+      <span>+254 110 537 670</span>
+    </a>
+
+    <a class="contact-box" href="https://www.instagram.com/mecky_mehra" target="_blank" rel="noopener">
+      <i class="fa-brands fa-square-instagram"></i>
+      <span>@mecky_mehra</span>
+    </a>
+  </section>
+
+  <!-- PAGE 4: Track Order -->
+  <section id="track">
+    <h1>TRACK YOUR ORDER</h1>
+    <p style="color:var(--gold-light);text-align:center;margin-bottom:30px;">
+      Enter your Order ID to see its current status.
+    </p>
+    <div class="track-form">
+      <input type="text" id="track-input" placeholder="e.g. BB-M2ABC-XY12" style="text-align:center;letter-spacing:0.1em;">
+      <button class="submit-btn" id="track-btn" style="margin-top:14px;">🔍 Track Order</button>
+    </div>
+    <div id="track-result"></div>
+  </section>
+
+  <footer>Bakes and Bites &copy; 2026 &mdash; All rights reserved</footer>
+
+  <!-- Page transition overlay -->
+  <div id="page-transition-overlay"></div>
+
+  <script src="db.js"></script>
+  <script src="slider.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      DB.init();
+      DB.trackPageView();
+
+      // ── Notification badge ─────────────────
+      function updateBadge() {
+        const count = DB.getUnreadCount();
+        const badge = document.getElementById('nav-notif-badge');
+        if (badge) {
+          badge.textContent = count;
+          badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+      }
+      updateBadge();
+      setInterval(updateBadge, 5000);
+
+      // ── Comments ───────────────────────────
+      function renderComments() {
+        const list = document.getElementById('comments-list');
+        const comments = DB.getComments();
+        if (!comments.length) {
+          list.innerHTML = '<p class="cart-empty">Be the first to leave a comment!</p>';
+          return;
+        }
+        list.innerHTML = comments.map(c => {
+          const d = new Date(c.timestamp);
+          const dateStr = d.toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+          return `<div class="comment-card">
+            <div class="comment-header">
+              <span class="comment-author">${escHtml(c.author)}</span>
+              <span class="comment-date">${dateStr}</span>
+            </div>
+            <p class="comment-body">${escHtml(c.text)}</p>
+          </div>`;
+        }).join('');
+      }
+
+      function escHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      document.getElementById('comment-btn').addEventListener('click', () => {
+        const author = document.getElementById('comment-author').value.trim() || 'Anonymous';
+        const text   = document.getElementById('comment-text').value.trim();
+        if (!text) { showToast('Please write a comment first.', 'error'); return; }
+        DB.saveComment(text, author);
+        document.getElementById('comment-author').value = '';
+        document.getElementById('comment-text').value   = '';
+        renderComments();
+        showToast('Comment posted!', 'success');
+        document.getElementById('comments-display').scrollIntoView({ behavior:'smooth', block:'nearest' });
+      });
+
+      renderComments();
+
+      // ── Order tracking ─────────────────────
+      document.getElementById('track-btn').addEventListener('click', trackOrder);
+      document.getElementById('track-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') trackOrder();
+      });
+
+      function trackOrder() {
+        const id     = document.getElementById('track-input').value.trim().toUpperCase();
+        const result = document.getElementById('track-result');
+        if (!id) { result.innerHTML = '<p class="track-error">Please enter an Order ID.</p>'; return; }
+
+        const order = DB.getOrderById(id);
+        if (!order) {
+          result.innerHTML = '<p class="track-error">Order not found. Please check your ID.</p>';
+          return;
+        }
+
+        const statusClass = {
+          'Pending':    'status-pending',
+          'Confirmed':  'status-confirmed',
+          'Preparing':  'status-preparing',
+          'Out for Delivery': 'status-delivering',
+          'Delivered':  'status-delivered',
+          'Cancelled':  'status-cancelled',
+        }[order.status] || 'status-pending';
+
+        const steps = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
+        const stepIdx = steps.indexOf(order.status);
+
+        result.innerHTML = `
+          <div class="track-card">
+            <div class="track-order-id">Order: ${order.id}</div>
+            <div class="track-customer">${escHtml(order.customer.name)} — ${escHtml(order.location)}</div>
+            <div class="track-status-badge ${statusClass}">${order.status}</div>
+            <div class="track-progress">
+              ${steps.map((s, i) => `
+                <div class="track-step ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''} ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
+                  <div class="step-dot"></div>
+                  <span>${s}</span>
+                </div>
+              `).join('')}
+            </div>
+            ${order.deliveryNote ? `<p class="track-note">📝 ${escHtml(order.deliveryNote)}</p>` : ''}
+            <div class="track-items">
+              ${order.items.map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
+            </div>
+            <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
+          </div>
+        `;
+      }
+
+      // ── Page transition ────────────────────
+      document.querySelectorAll('.page-transition-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const href = link.href;
+          const overlay = document.getElementById('page-transition-overlay');
+          overlay.classList.add('overlay-active');
+          setTimeout(() => { window.location.href = href; }, 450);
+        });
+      });
+
+      // ── Toast ──────────────────────────────
+      window.showToast = function(msg, type) {
+        const t = document.createElement('div');
+        t.className = 'bb-toast bb-toast-' + (type || 'info');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.classList.add('bb-toast-show'), 10);
+        setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3500);
+      };
+    });
+  </script>
+</body>
+</html>

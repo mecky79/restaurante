@@ -1,0 +1,120 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Place Your Order - Bakes and Bites</title>
+  <link rel="stylesheet" href="body.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="index.html" class="page-transition-link">Home</a>
+    <a href="index.html#about" class="page-transition-link">About Us</a>
+    <a href="index.html#contact" class="page-transition-link">Contact Us</a>
+    <a href="order.html" class="active">My Order</a>
+  </nav>
+
+  <!-- Header -->
+  <header>
+    <h1>PLACE YOUR ORDER</h1>
+    <p>Fill in the form below and we'll deliver right to your doorstep 🍟</p>
+  </header>
+
+  <!-- Order Form -->
+  <form id="order-form">
+
+    <!-- PERSONAL DETAILS -->
+    <fieldset>
+      <legend>📋 Personal Details</legend>
+      <div>
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Mecky John" required>
+      </div>
+      <div>
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="e.g. meckyjohn@gmail.com">
+      </div>
+      <div>
+        <label for="number">Phone Number</label>
+        <input type="tel" id="number" name="number" placeholder="+254 110 537 670" required>
+      </div>
+      <div>
+        <label for="address">Delivery Location</label>
+        <select id="address" name="address" required>
+          <option value="">-- Select your area --</option>
+          <option value="kinoo-87">87 Mall</option>
+          <option value="mama-ngina">Mama Ngina</option>
+          <option value="kariango-A">Kariango-A</option>
+          <option value="kariango-B">Kariango-B</option>
+          <option value="kariango-C">Kariango-C</option>
+          <option value="kanyariri">Kanyariri</option>
+          <option value="sunny-brook">Sunny Brook Gardens</option>
+          <option value="muthiga">Muthiga</option>
+          <option value="regen">Regen</option>
+          <option value="rungiri">Rungiri</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <!-- MENU SELECTION (built dynamically by script.js) -->
+    <div id="menu" class="menu-section">
+      <h2>🍽️ Menu Selection</h2>
+      <p class="menu-hint">You can add multiple items from the same category using <strong>+ Add item</strong>.</p>
+      <div id="menu-groups"></div>
+    </div>
+
+    <!-- LIVE CART -->
+    <div class="total-section">
+      <span class="total-label">🛒 Your Cart</span>
+      <div id="cart-list">
+        <p class="cart-empty">No items selected yet. Start picking above!</p>
+      </div>
+      <div class="cart-divider"></div>
+      <div class="cart-total-row">
+        <span class="cart-total-text">Order Total</span>
+        <input type="text" id="display" disabled value="KSh 0">
+      </div>
+      <p class="total-note" id="total-note">Select items above to see your total</p>
+    </div>
+
+    <!-- SPECIAL INSTRUCTIONS -->
+    <fieldset>
+      <legend>📝 Special Instructions</legend>
+      <label for="order-notes">Any requests or allergies?</label>
+      <textarea id="order-notes" name="notes" placeholder="e.g. No onions, extra sauce, nut allergy..."></textarea>
+    </fieldset>
+
+    <!-- SUBMIT -->
+    <button type="submit" class="submit-btn">🛒 Place Order</button>
+
+  </form>
+
+  <footer>Bakes and Bites &copy; 2026 &mdash; All rights reserved</footer>
+
+  <!-- Page transition overlay -->
+  <div id="page-transition-overlay"></div>
+
+  <script src="db.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // Page transition for nav links
+    document.querySelectorAll('.page-transition-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = link.href;
+        const overlay = document.getElementById('page-transition-overlay');
+        overlay.classList.add('overlay-active');
+        setTimeout(() => { window.location.href = href; }, 450);
+      });
+    });
+
+    // Fade in on load
+    window.addEventListener('pageshow', () => {
+      const overlay = document.getElementById('page-transition-overlay');
+      overlay.classList.remove('overlay-active');
+    });
+  </script>
+</body>
+</html>
