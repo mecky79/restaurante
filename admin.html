@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="body.css">
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script>
+    (function() {
+      const SESSION_DURATION = 8 * 60 * 60 * 1000;
+      const session = JSON.parse(sessionStorage.getItem('bb_admin_session') || 'null');
+      if (!session || (Date.now() - session.time) >= SESSION_DURATION) {
+        window.location.replace('admin-login.html');
+      }
+    })();
+  </script>
 </head>
 <body class="admin-body">
 
@@ -46,6 +55,7 @@
       </a>
     </nav>
     <a href="index.html" class="sidebar-back-btn">← Back to Site</a>
+    <button class="sidebar-logout-btn" id="logout-btn">🔒 Log Out</button>
   </aside>
 
   <!-- Mobile sidebar toggle -->

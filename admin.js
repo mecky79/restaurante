@@ -1,5 +1,5 @@
- // admin.js — Admin Dashboard Logic
-document.addEventListener('DOMContentLoaded', () => {
+   // admin.js — Admin Dashboard (Supabase async version)
+document.addEventListener('DOMContentLoaded', async () => {
   DB.init();
 
   // ── Panel switching ────────────────────────
@@ -10,34 +10,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (panel) panel.classList.add('active');
     const link = document.querySelector('[data-panel="' + name + '"]');
     if (link) link.classList.add('active');
-    // render on switch
     const renderers = {
-      dashboard:    renderDashboard,
-      orders:       renderOrders,
-      delivery:     renderDelivery,
-      'menu-mgr':   renderMenuMgr,
-      stock:        renderStock,
-      analytics:    renderAnalytics,
-      'slider-mgr': renderSliderMgr,
-      notifications:renderNotifications,
+      dashboard:     renderDashboard,
+      orders:        renderOrders,
+      delivery:      renderDelivery,
+      'menu-mgr':    renderMenuMgr,
+      stock:         renderStock,
+      analytics:     renderAnalytics,
+      'slider-mgr':  renderSliderMgr,
+      notifications: renderNotifications,
     };
     if (renderers[name]) renderers[name]();
-    // close sidebar on mobile
     document.getElementById('admin-sidebar').classList.remove('open');
   };
 
   document.querySelectorAll('.sidebar-link').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      switchPanel(link.dataset.panel);
-    });
+    link.addEventListener('click', e => { e.preventDefault(); switchPanel(link.dataset.panel); });
   });
 
   document.getElementById('sidebar-toggle').addEventListener('click', () => {
     document.getElementById('admin-sidebar').classList.toggle('open');
   });
 
-  // ── Date header ───────────────────────────
+  // ── Date ──────────────────────────────────
   const dateEl = document.getElementById('dash-date');
   if (dateEl) {
     dateEl.textContent = new Date().toLocaleDateString('en-KE', {
@@ -50,57 +45,65 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
-
   function statusClass(s) {
-    return {
-      'Pending':          'badge-pending',
-      'Confirmed':        'badge-confirmed',
-      'Preparing':        'badge-preparing',
-      'Out for Delivery': 'badge-delivering',
-      'Delivered':        'badge-delivered',
-      'Cancelled':        'badge-cancelled',
-    }[s] || 'badge-pending';
+    return { 'Pending':'badge-pending','Confirmed':'badge-confirmed','Preparing':'badge-preparing',
+      'Out for Delivery':'badge-delivering','Delivered':'badge-delivered','Cancelled':'badge-cancelled' }[s] || 'badge-pending';
   }
-
   function formatTime(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-KE', { day:'numeric', month:'short' }) + ' ' +
-           d.toLocaleTimeString('en-KE', { hour:'2-digit', minute:'2-digit' });
+    return d.toLocaleDateString('en-KE',{day:'numeric',month:'short'}) + ' ' +
+           d.toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
   }
-
   function toast(msg, type) {
     const t = document.createElement('div');
-    t.className = 'bb-toast bb-toast-' + (type||'info');
+    t.className   = 'bb-toast bb-toast-' + (type || 'info');
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.classList.add('bb-toast-show'), 10);
     setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3000);
   }
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  function showLoading(id, cols) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<tr><td colspan="${cols}" class="empty-row">⏳ Loading...</td></tr>`;
+  }
 
-  // ── Update badges ─────────────────────────
-  function updateBadges() {
-    const orders  = DB.getOrders();
+  // ── Notification badges ───────────────────
+  async function updateBadges() {
+    const orders  = await DB.getOrders();
     const pending = orders.filter(o => o.status === 'Pending').length;
-    const notifs  = DB.getUnreadCount();
+    const notifs  = await DB.getUnreadCount();
 
     const pb = document.getElementById('pending-badge');
     if (pb) { pb.textContent = pending; pb.style.display = pending ? 'inline-flex' : 'none'; }
-
     const nb = document.getElementById('sidebar-notif-count');
     if (nb) { nb.textContent = notifs; nb.style.display = notifs ? 'inline-flex' : 'none'; }
   }
   updateBadges();
-  setInterval(updateBadges, 5000);
+  setInterval(updateBadges, 10000);
 
   // ══════════════════════════════════════════
   // DASHBOARD
   // ══════════════════════════════════════════
-  function renderDashboard() {
-    const orders   = DB.getOrders();
-    const revenue  = DB.getRevenue();
-    const analytics= DB.getAnalytics();
-    const pending  = orders.filter(o => o.status === 'Pending').length;
+  async function renderDashboard() {
+    setText('stat-total-orders', '⏳');
+    setText('stat-revenue',      '⏳');
+    setText('stat-pending',      '⏳');
+    setText('stat-delivered',    '⏳');
+    setText('stat-views',        '⏳');
+    setText('stat-confirmed-rev','⏳');
+
+    const [orders, revenue, analytics] = await Promise.all([
+      DB.getOrders(),
+      DB.getRevenue(),
+      DB.getAnalytics(),
+    ]);
+
+    const pending = orders.filter(o => o.status === 'Pending').length;
 
     setText('stat-total-orders',  orders.length);
     setText('stat-revenue',       'KSh ' + revenue.total.toLocaleString());
@@ -109,14 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setText('stat-views',         analytics.pageViews);
     setText('stat-confirmed-rev', 'KSh ' + revenue.confirmed.toLocaleString());
 
-    // Recent orders table
+    // Recent orders
     const tbody = document.querySelector('#dash-recent-orders tbody');
     if (tbody) {
       const recent = orders.slice(0, 8);
       tbody.innerHTML = recent.length ? recent.map(o => `
         <tr onclick="openOrderModal('${esc(o.id)}')" style="cursor:pointer">
           <td><code>${esc(o.id)}</code></td>
-          <td>${esc(o.customer.name)}</td>
+          <td>${esc(o.customer && o.customer.name)}</td>
           <td>KSh ${(o.total||0).toLocaleString()}</td>
           <td><span class="status-badge ${statusClass(o.status)}">${esc(o.status)}</span></td>
           <td>${formatTime(o.timestamp)}</td>
@@ -124,23 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('') : '<tr><td colspan="5" class="empty-row">No orders yet</td></tr>';
     }
 
-    // Low stock
     renderLowStock();
     updateBadges();
   }
 
-  function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  }
-
   function renderLowStock() {
-    const stock = DB.getStock();
-    const menu  = DB.getMenu();
+    const stock   = DB.getStock();
+    const menu    = DB.getMenu();
     const allItems = Object.values(menu).flat();
-    const low = allItems.filter(item => (stock[item.id] || 0) <= 5);
-    const card = document.getElementById('low-stock-card');
-    const list = document.getElementById('low-stock-list');
+    const low      = allItems.filter(item => (stock[item.id] || 0) <= 5);
+    const card     = document.getElementById('low-stock-card');
+    const list     = document.getElementById('low-stock-list');
     if (!list) return;
     card.style.display = low.length ? '' : 'none';
     list.innerHTML = low.map(item => `
@@ -156,16 +153,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
   // ORDERS
   // ══════════════════════════════════════════
-  function renderOrders() {
+  async function renderOrders() {
+    showLoading('orders-table', 9);
     const filter = document.getElementById('order-filter').value;
     const search = (document.getElementById('order-search').value || '').toLowerCase();
-    let orders   = DB.getOrders();
 
+    let orders = await DB.getOrders();
     if (filter) orders = orders.filter(o => o.status === filter);
     if (search) orders = orders.filter(o =>
       o.id.toLowerCase().includes(search) ||
-      o.customer.name.toLowerCase().includes(search) ||
-      o.customer.phone.toLowerCase().includes(search)
+      (o.customer && o.customer.name && o.customer.name.toLowerCase().includes(search))
     );
 
     const tbody = document.querySelector('#orders-table tbody');
@@ -174,9 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = orders.length ? orders.map(o => `
       <tr>
         <td><code class="order-id-link" onclick="openOrderModal('${esc(o.id)}')">${esc(o.id)}</code></td>
-        <td>${esc(o.customer.name)}<br><small>${esc(o.customer.phone)}</small></td>
+        <td>${esc(o.customer && o.customer.name)}<br><small>${esc(o.customer && o.customer.phone)}</small></td>
         <td>${esc(o.location)}</td>
-        <td class="items-cell">${o.items.map(it => esc(it.name) + ' x' + it.qty).join(', ')}</td>
+        <td class="items-cell">${(o.items||[]).map(it => esc(it.name) + ' x' + it.qty).join(', ')}</td>
         <td>KSh ${(o.total||0).toLocaleString()}</td>
         <td><span class="status-badge ${statusClass(o.status)}">${esc(o.status)}</span></td>
         <td class="instructions-cell">${esc(o.instructions) || '<em style="opacity:.5">None</em>'}</td>
@@ -190,10 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>
     `).join('') : '<tr><td colspan="9" class="empty-row">No orders found</td></tr>';
 
-    // Status change listeners
     tbody.querySelectorAll('.status-select').forEach(sel => {
-      sel.addEventListener('change', () => {
-        DB.updateOrderStatus(sel.dataset.orderId, sel.value);
+      sel.addEventListener('change', async () => {
+        await DB.updateOrderStatus(sel.dataset.orderId, sel.value);
         toast('Status updated to ' + sel.value, 'success');
         updateBadges();
         renderOrders();
@@ -204,40 +200,40 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('order-filter').addEventListener('change', renderOrders);
   document.getElementById('order-search').addEventListener('input', renderOrders);
 
-  // ── Order Modal ───────────────────────────
-  window.openOrderModal = function(orderId) {
-    const order = DB.getOrderById(orderId);
-    if (!order) return;
-
+  // ── Order modal ───────────────────────────
+  window.openOrderModal = async function(orderId) {
     const modal   = document.getElementById('order-modal');
     const content = document.getElementById('modal-content');
+    modal.style.display = 'flex';
+    content.innerHTML   = '<p style="text-align:center;padding:40px;color:var(--gold-light)">⏳ Loading order...</p>';
+
+    const order = await DB.getOrderById(orderId);
+    if (!order) { content.innerHTML = '<p style="color:#e74c3c;padding:20px">Order not found.</p>'; return; }
 
     content.innerHTML = `
       <div class="modal-header">
         <h2>Order Details</h2>
         <div class="modal-order-id">${esc(order.id)}</div>
       </div>
-
       <div class="modal-section">
         <h3>Customer</h3>
-        <p><strong>Name:</strong> ${esc(order.customer.name)}</p>
-        <p><strong>Phone:</strong> ${esc(order.customer.phone)}</p>
-        ${order.customer.email ? `<p><strong>Email:</strong> ${esc(order.customer.email)}</p>` : ''}
+        <p><strong>Name:</strong> ${esc(order.customer && order.customer.name)}</p>
+        <p><strong>Phone:</strong> ${esc(order.customer && order.customer.phone)}</p>
+        ${order.customer && order.customer.email ? `<p><strong>Email:</strong> ${esc(order.customer.email)}</p>` : ''}
         <p><strong>Delivery Area:</strong> ${esc(order.location)}</p>
         <p><strong>Placed:</strong> ${formatTime(order.timestamp)}</p>
       </div>
-
       <div class="modal-section">
         <h3>Items Ordered</h3>
         <table class="modal-items-table">
           <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
           <tbody>
-            ${order.items.map(it => `
+            ${(order.items||[]).map(it => `
               <tr>
                 <td>${esc(it.name)}</td>
                 <td>${it.qty}</td>
                 <td>${it.price !== null ? 'KSh ' + it.price : 'Custom'}</td>
-                <td>${it.subtotal !== null ? 'KSh ' + it.subtotal.toLocaleString() : 'TBC'}</td>
+                <td>${it.subtotal !== null ? 'KSh ' + (it.subtotal||0).toLocaleString() : 'TBC'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -246,14 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </tfoot>
         </table>
       </div>
-
       ${order.instructions ? `
         <div class="modal-section">
           <h3>Special Instructions</h3>
           <p class="modal-instructions">${esc(order.instructions)}</p>
-        </div>
-      ` : ''}
-
+        </div>` : ''}
       <div class="modal-section">
         <h3>Status &amp; Delivery</h3>
         <div class="modal-status-row">
@@ -263,22 +256,21 @@ document.addEventListener('DOMContentLoaded', () => {
           </select>
         </div>
         <label style="color:var(--gold-light);margin-top:10px;display:block">Delivery Note</label>
-        <textarea id="modal-delivery-note" class="admin-textarea" placeholder="e.g. Rider on the way, gate 3">${esc(order.deliveryNote||'')}</textarea>
+        <textarea id="modal-delivery-note" class="admin-textarea"
+          placeholder="e.g. Rider on the way, gate 3">${esc(order.delivery_note||'')}</textarea>
         <button class="btn-gold" id="modal-save-btn" style="margin-top:10px">Save Changes</button>
       </div>
     `;
 
-    document.getElementById('modal-save-btn').addEventListener('click', () => {
+    document.getElementById('modal-save-btn').addEventListener('click', async () => {
       const newStatus = document.getElementById('modal-status-sel').value;
       const note      = document.getElementById('modal-delivery-note').value.trim();
-      DB.updateOrderStatus(order.id, newStatus, note);
+      await DB.updateOrderStatus(order.id, newStatus, note);
       toast('Order updated', 'success');
       updateBadges();
       modal.style.display = 'none';
       renderOrders();
     });
-
-    modal.style.display = 'flex';
   };
 
   document.getElementById('modal-close-btn').addEventListener('click', () => {
@@ -291,12 +283,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
   // DELIVERY CONTROL
   // ══════════════════════════════════════════
-  function renderDelivery() {
-    const orders = DB.getOrders().filter(o =>
-      ['Pending','Confirmed','Preparing','Out for Delivery'].includes(o.status)
-    );
+  async function renderDelivery() {
     const grid = document.getElementById('delivery-grid');
     if (!grid) return;
+    grid.innerHTML = '<p style="color:var(--gold-light);padding:20px">⏳ Loading...</p>';
+
+    const orders = (await DB.getOrders()).filter(o =>
+      ['Pending','Confirmed','Preparing','Out for Delivery'].includes(o.status)
+    );
 
     if (!orders.length) {
       grid.innerHTML = '<p style="color:var(--gold-light);padding:20px">No active orders right now.</p>';
@@ -310,34 +304,32 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="status-badge ${statusClass(o.status)}">${esc(o.status)}</span>
         </div>
         <div class="delivery-customer">
-          <strong>${esc(o.customer.name)}</strong>
-          <a href="tel:${esc(o.customer.phone)}" class="delivery-call-btn">
-            📞 ${esc(o.customer.phone)}
+          <strong>${esc(o.customer && o.customer.name)}</strong>
+          <a href="tel:${esc(o.customer && o.customer.phone)}" class="delivery-call-btn">
+            📞 ${esc(o.customer && o.customer.phone)}
           </a>
         </div>
         <div class="delivery-location">📍 ${esc(o.location)}</div>
-        <div class="delivery-items">${o.items.map(it => esc(it.name) + ' x' + it.qty).join(' · ')}</div>
+        <div class="delivery-items">${(o.items||[]).map(it => esc(it.name) + ' x' + it.qty).join(' · ')}</div>
         <div class="delivery-total">KSh ${(o.total||0).toLocaleString()}</div>
         ${o.instructions ? `<div class="delivery-instructions">📝 ${esc(o.instructions)}</div>` : ''}
         <div class="delivery-actions">
           ${['Confirmed','Preparing','Out for Delivery','Delivered'].map(s => `
             <button class="delivery-action-btn ${o.status === s ? 'btn-current' : ''}"
-              data-order="${esc(o.id)}" data-status="${s}">
-              ${s}
-            </button>
+              data-order="${esc(o.id)}" data-status="${s}">${s}</button>
           `).join('')}
         </div>
         <div class="delivery-note-row">
           <input type="text" class="admin-input delivery-note-input" data-order="${esc(o.id)}"
-            placeholder="Delivery note..." value="${esc(o.deliveryNote||'')}">
+            placeholder="Delivery note..." value="${esc(o.delivery_note||'')}">
           <button class="btn-gold delivery-note-save" data-order="${esc(o.id)}">Save</button>
         </div>
       </div>
     `).join('');
 
     grid.querySelectorAll('.delivery-action-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        DB.updateOrderStatus(btn.dataset.order, btn.dataset.status);
+      btn.addEventListener('click', async () => {
+        await DB.updateOrderStatus(btn.dataset.order, btn.dataset.status);
         toast('Status → ' + btn.dataset.status, 'success');
         updateBadges();
         renderDelivery();
@@ -345,11 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     grid.querySelectorAll('.delivery-note-save').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const input = grid.querySelector(`.delivery-note-input[data-order="${btn.dataset.order}"]`);
-        const order = DB.getOrderById(btn.dataset.order);
+        const order = await DB.getOrderById(btn.dataset.order);
         if (order) {
-          DB.updateOrderStatus(order.id, order.status, input.value.trim());
+          await DB.updateOrderStatus(order.id, order.status, input.value.trim());
           toast('Note saved', 'success');
         }
       });
@@ -357,39 +349,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ══════════════════════════════════════════
-  // MENU MANAGER
+  // MENU MANAGER (local)
   // ══════════════════════════════════════════
   const CAT_LABELS = {
-    'fast-food':   '🍟 Fast Food',
-    'quick-bites': '🍕 Quick Bites',
-    'bakery':      '🧁 Bakery Treats',
-    'special':     '🎂 Special Orders',
-    'drinks':      '🥤 Drinks',
-    'combos':      '⭐ Combo Deals',
+    'fast-food':'🍟 Fast Food','quick-bites':'🍕 Quick Bites','bakery':'🧁 Bakery Treats',
+    'special':'🎂 Special Orders','drinks':'🥤 Drinks','combos':'⭐ Combo Deals',
   };
 
   function renderMenuMgr() {
-    const menu = DB.getMenu();
+    const menu      = DB.getMenu();
     const container = document.getElementById('menu-mgr-list');
     if (!container) return;
 
     container.innerHTML = Object.entries(menu).map(([catId, items]) => `
       <div class="admin-card menu-cat-card">
-        <div class="card-header"><h2>${CAT_LABELS[catId] || catId}</h2></div>
+        <div class="card-header"><h2>${CAT_LABELS[catId]||catId}</h2></div>
         <div class="table-wrap">
           <table class="admin-table">
             <thead><tr><th>Item Name</th><th>Price (KSh)</th><th>Actions</th></tr></thead>
             <tbody>
               ${items.map(item => `
                 <tr id="menu-row-${esc(item.id)}">
-                  <td>
-                    <input type="text" class="admin-input inline-input menu-name-input"
-                      data-cat="${catId}" data-id="${esc(item.id)}" value="${esc(item.name)}">
-                  </td>
-                  <td>
-                    <input type="number" class="admin-input inline-input menu-price-input" style="width:100px"
-                      data-cat="${catId}" data-id="${esc(item.id)}" value="${item.price !== null ? item.price : ''}">
-                  </td>
+                  <td><input type="text" class="admin-input inline-input menu-name-input"
+                    data-cat="${catId}" data-id="${esc(item.id)}" value="${esc(item.name)}"></td>
+                  <td><input type="number" class="admin-input inline-input menu-price-input" style="width:100px"
+                    data-cat="${catId}" data-id="${esc(item.id)}" value="${item.price !== null ? item.price : ''}"></td>
                   <td>
                     <button class="btn-gold btn-sm menu-save-btn" data-cat="${catId}" data-id="${esc(item.id)}">Save</button>
                     <button class="btn-danger btn-sm menu-del-btn" data-cat="${catId}" data-id="${esc(item.id)}">Delete</button>
@@ -423,13 +407,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const addItemBtn  = document.getElementById('add-menu-item-btn');
-  const addItemForm = document.getElementById('add-item-form');
-  addItemBtn.addEventListener('click', () => {
-    addItemForm.style.display = addItemForm.style.display === 'none' ? '' : 'none';
+  document.getElementById('add-menu-item-btn').addEventListener('click', () => {
+    const f = document.getElementById('add-item-form');
+    f.style.display = f.style.display === 'none' ? '' : 'none';
   });
   document.getElementById('cancel-new-item').addEventListener('click', () => {
-    addItemForm.style.display = 'none';
+    document.getElementById('add-item-form').style.display = 'none';
   });
   document.getElementById('save-new-item').addEventListener('click', () => {
     const cat   = document.getElementById('new-item-cat').value;
@@ -438,14 +421,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) { toast('Please enter an item name', 'error'); return; }
     DB.addMenuItem(cat, { name, price });
     toast('Item added!', 'success');
-    addItemForm.style.display = 'none';
+    document.getElementById('add-item-form').style.display = 'none';
     document.getElementById('new-item-name').value  = '';
     document.getElementById('new-item-price').value = '';
     renderMenuMgr();
   });
 
   // ══════════════════════════════════════════
-  // STOCK
+  // STOCK (local)
   // ══════════════════════════════════════════
   function renderStock() {
     const stock = DB.getStock();
@@ -457,17 +440,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.entries(menu).forEach(([catId, items]) => {
       items.forEach(item => {
         const qty = stock[item.id] || 0;
-        const statusLabel = qty === 0 ? '🔴 Out of Stock'
-                          : qty <= 5 ? '🟡 Low Stock'
-                          : '🟢 Good';
+        const statusLabel = qty === 0 ? '🔴 Out of Stock' : qty <= 5 ? '🟡 Low Stock' : '🟢 Good';
         rows.push(`
           <tr>
             <td>${esc(item.name)}</td>
-            <td>${CAT_LABELS[catId] || catId}</td>
-            <td>
-              <input type="number" class="admin-input inline-input stock-qty-input"
-                style="width:80px" data-id="${esc(item.id)}" value="${qty}" min="0">
-            </td>
+            <td>${CAT_LABELS[catId]||catId}</td>
+            <td><input type="number" class="admin-input inline-input stock-qty-input"
+              style="width:80px" data-id="${esc(item.id)}" value="${qty}" min="0"></td>
             <td class="${qty===0?'stock-out':qty<=5?'stock-low':'stock-ok'}">${statusLabel}</td>
           </tr>
         `);
@@ -488,12 +467,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
   // ANALYTICS
   // ══════════════════════════════════════════
-  function renderAnalytics() {
-    const orders   = DB.getOrders();
-    const analytics= DB.getAnalytics();
-    const revenue  = DB.getRevenue();
-    const avg      = orders.length ? Math.round(revenue.total / orders.length) : 0;
+  async function renderAnalytics() {
+    setText('an-views',   '⏳');
+    setText('an-orders',  '⏳');
+    setText('an-revenue', '⏳');
+    setText('an-avg',     '⏳');
 
+    const [orders, analytics, revenue] = await Promise.all([
+      DB.getOrders(),
+      DB.getAnalytics(),
+      DB.getRevenue(),
+    ]);
+
+    const avg = orders.length ? Math.round(revenue.total / orders.length) : 0;
     setText('an-views',   analytics.pageViews);
     setText('an-orders',  orders.length);
     setText('an-revenue', 'KSh ' + revenue.total.toLocaleString());
@@ -501,11 +487,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Top items
     const itemCount = {};
-    orders.forEach(o => o.items.forEach(it => {
+    orders.forEach(o => (o.items||[]).forEach(it => {
       itemCount[it.name] = (itemCount[it.name] || 0) + it.qty;
     }));
     const topItems = Object.entries(itemCount).sort((a,b) => b[1]-a[1]).slice(0,10);
-    const topEl = document.getElementById('top-items-list');
+    const topEl    = document.getElementById('top-items-list');
     if (topEl) {
       const max = topItems[0]?.[1] || 1;
       topEl.innerHTML = topItems.length ? topItems.map(([name, qty]) => `
@@ -527,19 +513,17 @@ document.addEventListener('DOMContentLoaded', () => {
       sbEl.innerHTML = Object.entries(statusCount).map(([s,c]) => `
         <div class="stat-pill">
           <span class="status-badge ${statusClass(s)}">${esc(s)}</span>
-          <span class="stat-pill-count">${c} orders</span>
+          <span class="stat-pill-count">${c} order${c !== 1 ? 's' : ''}</span>
         </div>
       `).join('') || '<p style="opacity:.5">No data yet</p>';
     }
 
-    // Location breakdown
+    // Revenue by location
     const locRev = {};
-    orders.forEach(o => {
-      locRev[o.location] = (locRev[o.location]||0) + (o.total||0);
-    });
-    const locEl = document.getElementById('location-breakdown');
+    orders.forEach(o => { locRev[o.location] = (locRev[o.location]||0) + (o.total||0); });
+    const locEl  = document.getElementById('location-breakdown');
     if (locEl) {
-      const sorted = Object.entries(locRev).sort((a,b)=>b[1]-a[1]);
+      const sorted = Object.entries(locRev).sort((a,b) => b[1]-a[1]);
       const maxRev = sorted[0]?.[1] || 1;
       locEl.innerHTML = sorted.length ? sorted.map(([loc, rev]) => `
         <div class="analytics-bar-row">
@@ -554,17 +538,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ══════════════════════════════════════════
-  // SLIDER MANAGER
+  // SLIDER MANAGER (local)
   // ══════════════════════════════════════════
   function renderSliderMgr() {
     const images = DB.getSliderImages();
     const list   = document.getElementById('slider-img-list');
     if (!list) return;
-
     list.innerHTML = images.length ? images.map((img, i) => `
       <div class="slider-img-row">
         <span class="slider-img-name">${esc(img)}</span>
-        <button class="btn-danger btn-sm" data-idx="${i}" onclick="removeSliderImg(${i})">Remove</button>
+        <button class="btn-danger btn-sm" onclick="removeSliderImg(${i})">Remove</button>
       </div>
     `).join('') : '<p style="opacity:.5;margin-bottom:12px">No custom images added yet.</p>';
   }
@@ -592,25 +575,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
   // NOTIFICATIONS
   // ══════════════════════════════════════════
-  function renderNotifications() {
-    const notes = DB.getNotifications();
-    const el    = document.getElementById('notifications-list');
+  async function renderNotifications() {
+    const el = document.getElementById('notifications-list');
+    if (el) el.innerHTML = '<p style="opacity:.5;padding:20px">⏳ Loading...</p>';
+
+    const notes = await DB.getNotifications();
     if (!el) return;
     el.innerHTML = notes.length ? notes.map(n => `
       <div class="notif-card ${n.read ? '' : 'notif-unread'}">
         <div class="notif-msg">${esc(n.message)}</div>
         <div class="notif-time">${formatTime(n.time)}</div>
-        ${n.orderId ? `<button class="btn-gold btn-sm" onclick="openOrderModal('${esc(n.orderId)}')">View Order</button>` : ''}
+        ${n.order_id ? `<button class="btn-gold btn-sm" onclick="openOrderModal('${esc(n.order_id)}')">View Order</button>` : ''}
       </div>
     `).join('') : '<p style="opacity:.5;padding:20px">No notifications yet.</p>';
+
     updateBadges();
   }
 
-  document.getElementById('mark-read-btn').addEventListener('click', () => {
-    DB.markNotificationsRead();
+  document.getElementById('mark-read-btn').addEventListener('click', async () => {
+    await DB.markNotificationsRead();
     renderNotifications();
     toast('All marked as read', 'success');
   });
+
+  // ── Logout ────────────────────────────────
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    sessionStorage.removeItem('bb_admin_session');
+    window.location.replace('admin-login.html');
+  });
+
+  // ── Also update index.html comment section ─
+  // (handled separately in index.html inline script)
 
   // ── Initial render ────────────────────────
   renderDashboard();

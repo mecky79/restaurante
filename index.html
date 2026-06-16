@@ -16,9 +16,6 @@
     <a href="#contact">Contact Us</a>
     <a href="#track">Track Order</a>
     <a href="order.html" class="nav-order-btn" id="nav-order-link">My Order</a>
-    <a href="admin.html" class="nav-admin-btn" id="nav-admin-link">
-      Admin <span class="notif-badge" id="nav-notif-badge" style="display:none"></span>
-    </a>
   </nav>
 
   <!-- PAGE 1: Home -->
@@ -228,32 +225,36 @@
   <script src="db.js"></script>
   <script src="slider.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       DB.init();
       DB.trackPageView();
 
-      // ── Notification badge ─────────────────
-      function updateBadge() {
-        const count = DB.getUnreadCount();
-        const badge = document.getElementById('nav-notif-badge');
-        if (badge) {
-          badge.textContent = count;
-          badge.style.display = count > 0 ? 'inline-flex' : 'none';
-        }
+      function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       }
-      updateBadge();
-      setInterval(updateBadge, 5000);
+
+      // ── Toast ──────────────────────────────
+      window.showToast = function(msg, type) {
+        const t = document.createElement('div');
+        t.className = 'bb-toast bb-toast-' + (type || 'info');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.classList.add('bb-toast-show'), 10);
+        setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3500);
+      };
 
       // ── Comments ───────────────────────────
-      function renderComments() {
-        const list = document.getElementById('comments-list');
-        const comments = DB.getComments();
+      async function renderComments() {
+        const list     = document.getElementById('comments-list');
+        list.innerHTML = '<p class="cart-empty" style="opacity:.5">Loading comments...</p>';
+        const comments = await DB.getComments();
         if (!comments.length) {
           list.innerHTML = '<p class="cart-empty">Be the first to leave a comment!</p>';
           return;
         }
         list.innerHTML = comments.map(c => {
-          const d = new Date(c.timestamp);
+          const d       = new Date(c.timestamp);
           const dateStr = d.toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
           return `<div class="comment-card">
             <div class="comment-header">
@@ -265,23 +266,32 @@
         }).join('');
       }
 
-      function escHtml(str) {
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      }
-
-      document.getElementById('comment-btn').addEventListener('click', () => {
-        const author = document.getElementById('comment-author').value.trim() || 'Anonymous';
-        const text   = document.getElementById('comment-text').value.trim();
+      document.getElementById('comment-btn').addEventListener('click', async () => {
+        const author  = document.getElementById('comment-author').value.trim() || 'Anonymous';
+        const text    = document.getElementById('comment-text').value.trim();
         if (!text) { showToast('Please write a comment first.', 'error'); return; }
-        DB.saveComment(text, author);
-        document.getElementById('comment-author').value = '';
-        document.getElementById('comment-text').value   = '';
-        renderComments();
-        showToast('Comment posted!', 'success');
-        document.getElementById('comments-display').scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+        const btn = document.getElementById('comment-btn');
+        btn.disabled    = true;
+        btn.textContent = '⏳ Posting...';
+
+        const result = await DB.saveComment(text, author);
+
+        btn.disabled    = false;
+        btn.textContent = 'Submit Comment';
+
+        if (result) {
+          document.getElementById('comment-author').value = '';
+          document.getElementById('comment-text').value   = '';
+          await renderComments();
+          showToast('Comment posted!', 'success');
+          document.getElementById('comments-display').scrollIntoView({ behavior:'smooth', block:'nearest' });
+        } else {
+          showToast('Failed to post comment. Please try again.', 'error');
+        }
       });
 
-      renderComments();
+      await renderComments();
 
       // ── Order tracking ─────────────────────
       document.getElementById('track-btn').addEventListener('click', trackOrder);
@@ -289,45 +299,45 @@
         if (e.key === 'Enter') trackOrder();
       });
 
-      function trackOrder() {
+      async function trackOrder() {
         const id     = document.getElementById('track-input').value.trim().toUpperCase();
         const result = document.getElementById('track-result');
         if (!id) { result.innerHTML = '<p class="track-error">Please enter an Order ID.</p>'; return; }
 
-        const order = DB.getOrderById(id);
+        result.innerHTML = '<p style="color:var(--gold-light);text-align:center">⏳ Looking up your order...</p>';
+
+        const order = await DB.getOrderById(id);
         if (!order) {
           result.innerHTML = '<p class="track-error">Order not found. Please check your ID.</p>';
           return;
         }
 
-        const statusClass = {
-          'Pending':    'status-pending',
-          'Confirmed':  'status-confirmed',
-          'Preparing':  'status-preparing',
-          'Out for Delivery': 'status-delivering',
-          'Delivered':  'status-delivered',
-          'Cancelled':  'status-cancelled',
+        const sClass = {
+          'Pending':'status-pending','Confirmed':'status-confirmed','Preparing':'status-preparing',
+          'Out for Delivery':'status-delivering','Delivered':'status-delivered','Cancelled':'status-cancelled',
         }[order.status] || 'status-pending';
 
-        const steps = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
+        const steps   = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
         const stepIdx = steps.indexOf(order.status);
 
         result.innerHTML = `
           <div class="track-card">
-            <div class="track-order-id">Order: ${order.id}</div>
-            <div class="track-customer">${escHtml(order.customer.name)} — ${escHtml(order.location)}</div>
-            <div class="track-status-badge ${statusClass}">${order.status}</div>
+            <div class="track-order-id">Order: ${escHtml(order.id)}</div>
+            <div class="track-customer">${escHtml(order.customer && order.customer.name)} — ${escHtml(order.location)}</div>
+            <div class="track-status-badge ${sClass}">${escHtml(order.status)}</div>
             <div class="track-progress">
               ${steps.map((s, i) => `
-                <div class="track-step ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''} ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
+                <div class="track-step
+                  ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''}
+                  ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
                   <div class="step-dot"></div>
                   <span>${s}</span>
                 </div>
               `).join('')}
             </div>
-            ${order.deliveryNote ? `<p class="track-note">📝 ${escHtml(order.deliveryNote)}</p>` : ''}
+            ${order.delivery_note ? `<p class="track-note">📝 ${escHtml(order.delivery_note)}</p>` : ''}
             <div class="track-items">
-              ${order.items.map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
+              ${(order.items||[]).map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
             </div>
             <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
           </div>
@@ -338,22 +348,12 @@
       document.querySelectorAll('.page-transition-link').forEach(link => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
-          const href = link.href;
+          const href    = link.href;
           const overlay = document.getElementById('page-transition-overlay');
           overlay.classList.add('overlay-active');
           setTimeout(() => { window.location.href = href; }, 450);
         });
       });
-
-      // ── Toast ──────────────────────────────
-      window.showToast = function(msg, type) {
-        const t = document.createElement('div');
-        t.className = 'bb-toast bb-toast-' + (type || 'info');
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.classList.add('bb-toast-show'), 10);
-        setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3500);
-      };
     });
   </script>
 </body>
