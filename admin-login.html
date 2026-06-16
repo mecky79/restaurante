@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,7 +13,6 @@
       min-height: 100vh;
       padding: 20px;
     }
-
     .login-card {
       background: rgba(30, 12, 3, 0.85);
       border: 1.5px solid var(--gold);
@@ -31,9 +30,7 @@
       position: relative;
       z-index: 1;
     }
-
     .login-icon { font-size: 2.8rem; }
-
     .login-title {
       font-family: 'Playfair Display', serif;
       font-size: 1.7rem;
@@ -42,22 +39,18 @@
       letter-spacing: 0.06em;
       text-align: center;
     }
-
     .login-sub {
       font-size: 0.85rem;
       color: rgba(253,240,220,0.45);
       text-align: center;
-      letter-spacing: 0.04em;
       margin-top: -10px;
     }
-
     .login-field {
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
-
     .login-field label {
       font-size: 0.78rem;
       font-weight: 700;
@@ -65,7 +58,6 @@
       text-transform: uppercase;
       color: var(--gold-light);
     }
-
     .login-field input {
       width: 100%;
       padding: 14px 16px;
@@ -79,12 +71,10 @@
       letter-spacing: 0.12em;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-
     .login-field input:focus {
       border-color: var(--gold);
       box-shadow: 0 0 0 3px rgba(232,168,56,0.18);
     }
-
     .login-btn {
       width: 100%;
       padding: 15px;
@@ -102,38 +92,39 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
       margin-top: 4px;
     }
-
     .login-btn:hover {
       background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
       color: var(--brown-dark);
       transform: translateY(-2px);
     }
-
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
     .login-error {
       color: #e74c3c;
       font-size: 0.85rem;
       text-align: center;
       min-height: 20px;
-      animation: fadeUp 0.2s ease;
     }
-
-    .login-attempts {
-      font-size: 0.75rem;
-      color: rgba(253,240,220,0.3);
+    .login-success {
+      color: #2ecc71;
+      font-size: 0.85rem;
       text-align: center;
     }
-
     .login-divider {
       width: 60px;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
       margin: 0 auto;
     }
-
-    .shake {
-      animation: shake 0.4s ease;
+    .attempts-text {
+      font-size: 0.75rem;
+      color: rgba(253,240,220,0.3);
+      text-align: center;
     }
-
+    .shake { animation: shake 0.4s ease; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20%      { transform: translateX(-8px); }
@@ -141,7 +132,6 @@
       60%      { transform: translateX(-5px); }
       80%      { transform: translateX(5px); }
     }
-
     @keyframes fadeUp {
       from { opacity:0; transform:translateY(24px); }
       to   { opacity:1; transform:translateY(0); }
@@ -149,7 +139,6 @@
   </style>
 </head>
 <body>
-
   <div class="login-card" id="login-card">
     <div class="login-icon">🔐</div>
     <div class="login-title">Admin Access</div>
@@ -168,100 +157,101 @@
     </div>
 
     <div class="login-error" id="login-error"></div>
-
     <button class="login-btn" id="login-btn">Enter Dashboard</button>
-
-    <p class="login-attempts" id="attempts-text"></p>
+    <p class="attempts-text" id="attempts-text"></p>
   </div>
 
   <script>
-    // ── Password config ────────────────────────────────────────────────────
-    // The actual password is: BakesAdmin2026
-    // Stored below as a SHA-256 hash — the plain text never appears in code.
-    // To change the password, generate a new SHA-256 hash and replace below.
-    // Free tool: https://emn178.github.io/online-tools/sha256.html
-    const CORRECT_HASH = '3c547f9e309bf607a0f58250edadc8d8f2783c135ff543c712a99aa1648b02a7';
+    // ── Config ────────────────────────────────
+    const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
+    const MAX_ATTEMPTS     = 5;
+    const LOCKOUT_DURATION = 10 * 60 * 1000;      // 10 minutes
 
-    // Session duration in milliseconds (8 hours)
-    const SESSION_DURATION = 8 * 60 * 60 * 1000;
+    // Password is encoded — not plain text in code
+    // To change: btoa('YourNewPassword') in browser console, paste result below
+    const ENCODED = 'QmFrZXNBZG1pbjIwMjY=';
 
-    // Max failed attempts before lockout
-    const MAX_ATTEMPTS = 10;
-    const LOCKOUT_DURATION = 1 * 60 * 1000; // 1 minute
+    // ── Already logged in? ────────────────────
+    try {
+      const session = JSON.parse(sessionStorage.getItem('bb_admin_session') || 'null');
+      if (session && (Date.now() - session.time) < SESSION_DURATION) {
+        window.location.replace('admin.html');
+      }
+    } catch(e) {}
 
-    // ── Check if already authenticated ────────────────────────────────────
-    const session = JSON.parse(sessionStorage.getItem('bb_admin_session') || 'null');
-    if (session && (Date.now() - session.time) < SESSION_DURATION) {
-      window.location.replace('admin.html');
-    }
-
-    // ── Check lockout ─────────────────────────────────────────────────────
+    // ── Lockout helpers ───────────────────────
     function getLockout() {
-      return JSON.parse(localStorage.getItem('bb_admin_lockout') || 'null');
+      try { return JSON.parse(localStorage.getItem('bb_admin_lockout') || 'null'); }
+      catch(e) { return null; }
     }
     function setLockout(data) {
-      localStorage.setItem('bb_admin_lockout', JSON.stringify(data));
+      try { localStorage.setItem('bb_admin_lockout', JSON.stringify(data)); }
+      catch(e) {}
+    }
+    function clearLockout() {
+      try { localStorage.removeItem('bb_admin_lockout'); }
+      catch(e) {}
     }
 
-    function checkLockout() {
+    function isLockedOut() {
       const lockout = getLockout();
       if (!lockout) return false;
       const elapsed = Date.now() - lockout.time;
       if (elapsed < LOCKOUT_DURATION) {
         const remaining = Math.ceil((LOCKOUT_DURATION - elapsed) / 60000);
-        showError(`Too many attempts. Try again in ${remaining} minute${remaining > 1 ? 's' : ''}.`);
+        showError('Too many attempts. Try again in ' + remaining + ' minute' + (remaining > 1 ? 's' : '') + '.');
         document.getElementById('login-btn').disabled = true;
         document.getElementById('admin-pass').disabled = true;
         return true;
       }
-      // Lockout expired — clear it
-      localStorage.removeItem('bb_admin_lockout');
+      clearLockout();
       return false;
     }
 
-    // ── SHA-256 hashing via Web Crypto API ────────────────────────────────
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray  = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // ── UI helpers ────────────────────────────────────────────────────────
+    // ── UI helpers ────────────────────────────
     function showError(msg) {
-      const el = document.getElementById('login-error');
-      el.textContent = msg;
+      document.getElementById('login-error').textContent = msg;
+    }
+    function showAttemptsLeft(attempts) {
+      const left = MAX_ATTEMPTS - attempts;
+      const el   = document.getElementById('attempts-text');
+      el.textContent = left > 0
+        ? left + ' attempt' + (left !== 1 ? 's' : '') + ' remaining before lockout'
+        : '';
+    }
+    function triggerShake() {
+      const card = document.getElementById('login-card');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
     }
 
-    function updateAttemptsText(attempts) {
-      const el = document.getElementById('attempts-text');
-      if (attempts > 0) {
-        const left = MAX_ATTEMPTS - attempts;
-        el.textContent = `${left} attempt${left !== 1 ? 's' : ''} remaining before lockout`;
-      } else {
-        el.textContent = '';
-      }
-    }
-
-    // ── Login logic ───────────────────────────────────────────────────────
-    async function attemptLogin() {
-      if (checkLockout()) return;
+    // ── Login ─────────────────────────────────
+    function attemptLogin() {
+      if (isLockedOut()) return;
 
       const input = document.getElementById('admin-pass').value;
       if (!input) { showError('Please enter the password.'); return; }
 
-      const hash = await sha256(input);
+      // Decode and compare directly — simple and reliable
+      let correct = '';
+      try { correct = atob(ENCODED); } catch(e) {}
 
-      if (hash === CORRECT_HASH) {
-        // Success — set session and redirect
-        sessionStorage.setItem('bb_admin_session', JSON.stringify({ time: Date.now() }));
-        localStorage.removeItem('bb_admin_lockout');
+      if (input === correct) {
+        // ✅ Correct
+        try {
+          sessionStorage.setItem('bb_admin_session', JSON.stringify({ time: Date.now() }));
+        } catch(e) {}
+        clearLockout();
         showError('');
-        document.getElementById('login-btn').textContent = '✅ Redirecting...';
-        setTimeout(() => window.location.replace('admin.html'), 400);
+        const btn = document.getElementById('login-btn');
+        btn.textContent = '✅ Redirecting...';
+        btn.style.background = 'linear-gradient(90deg,#2ecc71,#27ae60)';
+        setTimeout(() => window.location.replace('admin.html'), 500);
+
       } else {
-        // Failed attempt
-        const lockout  = getLockout() || { attempts: 0, time: Date.now() };
+        // ❌ Wrong
+        const lockout   = getLockout() || { attempts: 0, time: Date.now() };
         lockout.attempts += 1;
         lockout.time      = Date.now();
         setLockout(lockout);
@@ -271,28 +261,25 @@
           document.getElementById('login-btn').disabled = true;
           document.getElementById('admin-pass').disabled = true;
         } else {
-          updateAttemptsText(lockout.attempts);
           showError('Incorrect password. Please try again.');
-          const card = document.getElementById('login-card');
-          card.classList.remove('shake');
-          void card.offsetWidth; // force reflow
-          card.classList.add('shake');
+          showAttemptsLeft(lockout.attempts);
+          triggerShake();
           document.getElementById('admin-pass').value = '';
           document.getElementById('admin-pass').focus();
         }
       }
     }
 
-    // ── Event listeners ───────────────────────────────────────────────────
+    // ── Events ────────────────────────────────
     document.getElementById('login-btn').addEventListener('click', attemptLogin);
-    document.getElementById('admin-pass').addEventListener('keydown', e => {
+    document.getElementById('admin-pass').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') attemptLogin();
     });
 
-    // Check lockout on load
-    checkLockout();
+    // Check lockout on page load
+    isLockedOut();
     const existing = getLockout();
-    if (existing) updateAttemptsText(existing.attempts);
+    if (existing && existing.attempts > 0) showAttemptsLeft(existing.attempts);
   </script>
 </body>
 </html>
