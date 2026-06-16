@@ -186,8 +186,8 @@
     const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
     // Max failed attempts before lockout
-    const MAX_ATTEMPTS = 5;
-    const LOCKOUT_DURATION = 10 * 60 * 1000; // 10 minutes
+    const MAX_ATTEMPTS = 10;
+    const LOCKOUT_DURATION = 1 * 60 * 1000; // 1 minute
 
     // ── Check if already authenticated ────────────────────────────────────
     const session = JSON.parse(sessionStorage.getItem('bb_admin_session') || 'null');
