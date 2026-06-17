@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login — Bakes and Bites</title>
   <link rel="stylesheet" href="body.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body {
       display: flex;
@@ -140,7 +141,7 @@
 </head>
 <body>
   <div class="login-card" id="login-card">
-    <div class="login-icon">🔐</div>
+    <div class="login-icon"><i class="fa-solid fa-user-lock" style="color: rgb(255, 209, 4);"></i></div>
     <div class="login-title">Admin Access</div>
     <p class="login-sub">Bakes and Bites — Staff Only</p>
     <div class="login-divider"></div>
@@ -165,7 +166,7 @@
     // ── Config ────────────────────────────────
     const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
     const MAX_ATTEMPTS     = 5;
-    const LOCKOUT_DURATION = 10 * 60 * 1000;      // 10 minutes
+    const LOCKOUT_DURATION = 1 * 60 * 1000;      // 10 minutes
 
     // Password is encoded — not plain text in code
     // To change: btoa('YourNewPassword') in browser console, paste result below
@@ -245,7 +246,7 @@
         clearLockout();
         showError('');
         const btn = document.getElementById('login-btn');
-        btn.textContent = '✅ Redirecting...';
+        btn.innerHTML = '<i class="fa-solid fa-circle-check" style="color: rgb(126, 67, 8);"></i> Redirecting...';
         btn.style.background = 'linear-gradient(90deg,#2ecc71,#27ae60)';
         setTimeout(() => window.location.replace('admin.html'), 500);
 
@@ -257,7 +258,7 @@
         setLockout(lockout);
 
         if (lockout.attempts >= MAX_ATTEMPTS) {
-          showError('Too many failed attempts. Locked out for 10 minutes.');
+          showError('Too many failed attempts. Locked out for 1 minutes.');
           document.getElementById('login-btn').disabled = true;
           document.getElementById('admin-pass').disabled = true;
         } else {

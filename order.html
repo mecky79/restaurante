@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Place Your Order - Bakes and Bites</title>
   <link rel="stylesheet" href="body.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
@@ -27,7 +28,7 @@
 
     <!-- PERSONAL DETAILS -->
     <fieldset>
-      <legend>📋 Personal Details</legend>
+      <legend><i class="fa-solid fa-clipboard-user" style="color: rgb(76, 35, 0);"></i> Personal Details</legend>
       <div>
         <label for="name">Full Name</label>
         <input type="text" id="name" name="name" placeholder="e.g. Mecky John" required>
@@ -60,14 +61,14 @@
 
     <!-- MENU SELECTION (built dynamically by script.js) -->
     <div id="menu" class="menu-section">
-      <h2>🍽️ Menu Selection</h2>
+      <h2><i class="fa-solid fa-kitchen-set" style="color: rgb(215, 170, 8);"></i> Menu Selection</h2>
       <p class="menu-hint">You can add multiple items from the same category using <strong>+ Add item</strong>.</p>
       <div id="menu-groups"></div>
     </div>
 
     <!-- LIVE CART -->
     <div class="total-section">
-      <span class="total-label">🛒 Your Cart</span>
+      <span class="total-label"><i class="fa-solid fa-cart-plus" style="color: rgb(72, 36, 4);"></i> Your Cart</span>
       <div id="cart-list">
         <p class="cart-empty">No items selected yet. Start picking above!</p>
       </div>
@@ -81,13 +82,13 @@
 
     <!-- SPECIAL INSTRUCTIONS -->
     <fieldset>
-      <legend>📝 Special Instructions</legend>
+      <legend><i class="fa-solid fa-clipboard-list" style="color: rgb(72, 36, 4);"></i> Special Instructions</legend>
       <label for="order-notes">Any requests or allergies?</label>
       <textarea id="order-notes" name="notes" placeholder="e.g. No onions, extra sauce, nut allergy..."></textarea>
     </fieldset>
 
     <!-- SUBMIT -->
-    <button type="submit" class="submit-btn">🛒 Place Order</button>
+    <button type="submit" class="submit-btn"><i class="fa-solid fa-cart-arrow-down" style="color: rgb(241, 241, 237);"></i> Place Order</button>
 
   </form>
 

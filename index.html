@@ -69,7 +69,7 @@
         </div>
         <div>
           <h2>MENU</h2>
-          <h3>🍟 FAST FOOD</h3>
+          <h3><i class="fa-solid fa-burger" style="color: rgb(72, 36, 4);"></i>FAST FOOD</h3>
           <ul>
             <li>Classic Burger &mdash; KSh 250</li>
             <li>Cheese Burger &mdash; KSh 300</li>
@@ -88,7 +88,7 @@
           <img src="quickbites.webp" alt="Quick Bites">
         </div>
         <div>
-          <h3>🍕 QUICK BITES</h3>
+          <h3><i class="fa-solid fa-pizza-slice" style="color: rgb(72, 36, 4);"></i> QUICK BITES</h3>
           <ul>
             <li>Mini Pizza &mdash; KSh 350</li>
             <li>Sausage Roll &mdash; KSh 120</li>
@@ -103,7 +103,7 @@
           <img src="bakery.webp" alt="Bakery Treats">
         </div>
         <div>
-          <h3>🧁 BAKERY TREATS</h3>
+          <h3><i class="fa-solid fa-cookie-bite" style="color: rgb(76, 40, 6);"></i> BAKERY TREATS</h3>
           <ul>
             <li>Cupcakes (Vanilla/Chocolate) &mdash; KSh 100</li>
             <li>Doughnuts (Glazed/Chocolate) &mdash; KSh 80</li>
@@ -119,7 +119,7 @@
           <img src="special.webp" alt="Special Orders">
         </div>
         <div>
-          <h3>🎂 SPECIAL ORDERS</h3>
+          <h3> <i class="fa-solid fa-cake-candles" style="color: rgb(72, 36, 4);"></i>SPECIAL ORDERS</h3>
           <ul>
             <li>Birthday Cakes (1kg+) &mdash; From KSh 1500</li>
             <li>Custom Cakes &mdash; Price varies</li>
@@ -132,7 +132,7 @@
           <img src="drinks.webp" alt="Drinks">
         </div>
         <div>
-          <h3>🥤 DRINKS</h3>
+          <h3><i class="fa-solid fa-blender" style="color: rgb(72, 36, 4);"></i> DRINKS</h3>
           <ul>
             <li>Soda (500ml) &mdash; KSh 100</li>
             <li>Fresh Juice &mdash; KSh 150</li>
@@ -147,7 +147,7 @@
           <img src="combo.webp" alt="Combo Deals">
         </div>
         <div>
-          <h3>⭐ COMBO DEALS</h3>
+          <h3><i class="fa-solid fa-ranking-star" style="color: rgb(88, 54, 2);"></i>        COMBO DEALS</h3>
           <ul>
             <li>Burger + Fries + Soda &mdash; KSh 450</li>
             <li>Hot Dog + Juice &mdash; KSh 300</li>
@@ -164,7 +164,7 @@
 
     <!-- COMMENT SECTION -->
     <fieldset id="comment-section">
-      <legend>💬 Leave a Comment</legend>
+      <legend><i class="fa-solid fa-comments" style="color: rgb(72, 36, 4);"></i> Leave a Comment</legend>
       <label for="comment-author">Your Name</label>
       <input type="text" id="comment-author" placeholder="e.g. Jane Doe">
       <label for="comment-text">Your Comment</label>
@@ -174,7 +174,7 @@
 
     <!-- COMMENTS DISPLAY -->
     <div id="comments-display">
-      <h3 style="color:var(--gold);margin-bottom:16px;">💬 What Our Customers Say</h3>
+      <h3 style="color:var(--brown-dark);margin-bottom:16px;"><i class="fa-solid fa-comment-dots" style="color: rgb(72, 36, 4);"></i> What Our Customers Say</h3>
       <div id="comments-list">
         <p class="cart-empty">Be the first to leave a comment!</p>
       </div>
@@ -205,23 +205,25 @@
   </section>
 
   <!-- PAGE 4: Track Order -->
-  <section id="track">
-    <h1>TRACK YOUR ORDER</h1>
-    <p style="color:var(--gold-light);text-align:center;margin-bottom:30px;">
-      Enter your Order ID to see its current status.
-    </p>
+   <section id="track">
+  <h1>TRACK YOUR ORDER</h1>
+  <p style="color:var(--gold-light);text-align:center;margin-bottom:30px;">
+    Your orders from this device are shown below automatically.
+  </p>
+
+  <div id="my-orders-section" style="width:100%;max-width:560px;margin:0 auto 30px;">
+    <div id="my-orders-list"></div>
+  </div>
+
+  <div class="track-fallback">
+    <p>Ordered from a different device?</p>
     <div class="track-form">
-      <input type="text" id="track-input" placeholder="e.g. BB-M2ABC-XY12" style="text-align:center;letter-spacing:0.1em;">
+      <input type="text" id="track-input" placeholder="Paste your Order ID e.g. BB-M2ABC-XY12" style="text-align:center;letter-spacing:0.1em;">
       <button class="submit-btn" id="track-btn" style="margin-top:14px;">🔍 Track Order</button>
     </div>
     <div id="track-result"></div>
-  </section>
-
-  <footer>Bakes and Bites &copy; 2026 &mdash; All rights reserved</footer>
-
-  <!-- Page transition overlay -->
-  <div id="page-transition-overlay"></div>
-
+  </div>
+</section>
   <script src="db.js"></script>
   <script src="slider.js"></script>
   <script>
@@ -273,7 +275,7 @@
 
         const btn = document.getElementById('comment-btn');
         btn.disabled    = true;
-        btn.textContent = '⏳ Posting...';
+        btn.innerHTML = '<i class="fa-solid fa-hourglass-half" style="color: rgb(111, 72, 3);"></i> Posting...';
 
         const result = await DB.saveComment(text, author);
 
@@ -294,55 +296,94 @@
       await renderComments();
 
       // ── Order tracking ─────────────────────
-      document.getElementById('track-btn').addEventListener('click', trackOrder);
-      document.getElementById('track-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') trackOrder();
-      });
+       // ── Order tracking ─────────────────────
+function buildTrackCard(order) {
+  const sClass = {
+    'Pending':'status-pending','Confirmed':'status-confirmed','Preparing':'status-preparing',
+    'Out for Delivery':'status-delivering','Delivered':'status-delivered','Cancelled':'status-cancelled',
+  }[order.status] || 'status-pending';
 
-      async function trackOrder() {
-        const id     = document.getElementById('track-input').value.trim().toUpperCase();
-        const result = document.getElementById('track-result');
-        if (!id) { result.innerHTML = '<p class="track-error">Please enter an Order ID.</p>'; return; }
+  const steps   = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
+  const stepIdx = steps.indexOf(order.status);
 
-        result.innerHTML = '<p style="color:var(--gold-light);text-align:center">⏳ Looking up your order...</p>';
-
-        const order = await DB.getOrderById(id);
-        if (!order) {
-          result.innerHTML = '<p class="track-error">Order not found. Please check your ID.</p>';
-          return;
-        }
-
-        const sClass = {
-          'Pending':'status-pending','Confirmed':'status-confirmed','Preparing':'status-preparing',
-          'Out for Delivery':'status-delivering','Delivered':'status-delivered','Cancelled':'status-cancelled',
-        }[order.status] || 'status-pending';
-
-        const steps   = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
-        const stepIdx = steps.indexOf(order.status);
-
-        result.innerHTML = `
-          <div class="track-card">
-            <div class="track-order-id">Order: ${escHtml(order.id)}</div>
-            <div class="track-customer">${escHtml(order.customer && order.customer.name)} — ${escHtml(order.location)}</div>
-            <div class="track-status-badge ${sClass}">${escHtml(order.status)}</div>
-            <div class="track-progress">
-              ${steps.map((s, i) => `
-                <div class="track-step
-                  ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''}
-                  ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
-                  <div class="step-dot"></div>
-                  <span>${s}</span>
-                </div>
-              `).join('')}
-            </div>
-            ${order.delivery_note ? `<p class="track-note">📝 ${escHtml(order.delivery_note)}</p>` : ''}
-            <div class="track-items">
-              ${(order.items||[]).map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
-            </div>
-            <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
+  return `
+    <div class="track-card">
+      <div class="track-order-id">Order: ${escHtml(order.id)}</div>
+      <div class="track-customer">${escHtml(order.customer && order.customer.name)} — ${escHtml(order.location)}</div>
+      <div class="track-status-badge ${sClass}">${escHtml(order.status)}</div>
+      <div class="track-progress">
+        ${steps.map((s, i) => `
+          <div class="track-step
+            ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''}
+            ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
+            <div class="step-dot"></div>
+            <span>${s}</span>
           </div>
-        `;
-      }
+        `).join('')}
+      </div>
+      ${order.delivery_note ? `<p class="track-note"><i class="fa-solid fa-bell" style="color: rgb(255, 200, 20);"></i> ${escHtml(order.delivery_note)}</p>` : ''}
+      <div class="track-items">
+        ${(order.items||[]).map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
+      </div>
+      <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
+    </div>
+  `;
+}
+
+async function loadMyOrders() {
+  const myOrdersList = document.getElementById('my-orders-list');
+  try {
+    const savedIds = JSON.parse(localStorage.getItem('bb_my_orders') || '[]');
+    if (!savedIds.length) {
+      myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">No orders from this device yet.</p>';
+      return;
+    }
+    myOrdersList.innerHTML = '<p style="color:var(--gold-light);text-align:center;font-size:0.85rem">⏳ Loading your orders...</p>';
+    const orders = await Promise.all(savedIds.map(id => DB.getOrderById(id)));
+    const valid  = orders.filter(Boolean);
+    if (!valid.length) {
+      myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">Could not load orders. Try using your Order ID below.</p>';
+      return;
+    }
+    myOrdersList.innerHTML = valid.map(buildTrackCard).join('');
+  } catch(e) {
+    myOrdersList.innerHTML = '<p class="track-error" style="text-align:center">Failed to load orders.</p>';
+  }
+}
+
+await loadMyOrders();
+setInterval(loadMyOrders, 30000);
+
+document.getElementById('track-btn').addEventListener('click', trackByID);
+document.getElementById('track-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') trackByID();
+});
+
+async function trackByID() {
+  const id     = document.getElementById('track-input').value.trim().toUpperCase();
+  const result = document.getElementById('track-result');
+  if (!id) { result.innerHTML = '<p class="track-error">Please enter an Order ID.</p>'; return; }
+
+  result.innerHTML = '<p style="color:var(--gold-light);text-align:center">⏳ Looking up your order...</p>';
+
+  const order = await DB.getOrderById(id);
+  if (!order) {
+    result.innerHTML = '<p class="track-error" style="text-align:center">Order not found. Please check your ID.</p>';
+    return;
+  }
+
+  try {
+    const existing = JSON.parse(localStorage.getItem('bb_my_orders') || '[]');
+    if (!existing.includes(id)) {
+      existing.unshift(id);
+      localStorage.setItem('bb_my_orders', JSON.stringify(existing));
+    }
+  } catch(e) {}
+
+  result.innerHTML = buildTrackCard(order);
+  document.getElementById('track-input').value = '';
+  await loadMyOrders();
+}
 
       // ── Page transition ────────────────────
       document.querySelectorAll('.page-transition-link').forEach(link => {

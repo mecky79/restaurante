@@ -1,16 +1,16 @@
- // script.js — Order page: multi-select cart, live calculator, order submission
+// script.js — Order page: multi-select cart, live calculator, order submission
 document.addEventListener('DOMContentLoaded', async () => {
   DB.init();
 
   // ── Category config ───────────────────────
-  const CATEGORIES = [
-    { id: 'fast-food',   label: '🍟 Fast Food'     },
-    { id: 'quick-bites', label: '🍕 Quick Bites'   },
-    { id: 'bakery',      label: '🧁 Bakery Treats'  },
-    { id: 'special',     label: '🎂 Special Orders' },
-    { id: 'drinks',      label: '🥤 Drinks'         },
-    { id: 'combos',      label: '⭐ Combo Deals'    },
-  ];
+   const CATEGORIES = [
+  { id: 'fast-food',   label: 'Fast Food',     icon: 'fa-solid fa-burger'        },
+  { id: 'quick-bites', label: 'Quick Bites',   icon: 'fa-solid fa-pizza-slice'   },
+  { id: 'bakery',      label: 'Bakery Treats', icon: 'fa-solid fa-cookie'        },
+  { id: 'special',     label: 'Special Orders',icon: 'fa-solid fa-cake-candles'  },
+  { id: 'drinks',      label: 'Drinks',        icon: 'fa-solid fa-mug-hot'       },
+  { id: 'combos',      label: 'Combo Deals',   icon: 'fa-solid fa-bag-shopping'  },
+];
 
   // ── Build price map from menu ─────────────
   const PRICE_MAP = {};
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const label = document.createElement('span');
     label.className = 'category-label';
-    label.textContent = cat.label;
+    label.innerHTML = `<i class="${cat.icon}"></i> ${cat.label}`;
     group.appendChild(label);
 
     const itemsWrap = document.createElement('div');
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Disable button while saving
       const submitBtn = form.querySelector('.submit-btn');
       submitBtn.disabled    = true;
-      submitBtn.textContent = '⏳ Placing order...';
+      submitBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate" style="color: rgb(126, 67, 8);"></i> Placing order...';
 
       const orderId = await DB.saveOrder({
         customer: { name, email, phone },
@@ -210,6 +210,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Order placed! Your ID: ' + orderId, 'success');
         form.reset();
         recalculate();
+        // ── Save order ID permanently to this device ──
+        saveOrderIdLocally(orderId);
         showConfirmation(orderId, total, hasCustom);
       } else {
         showToast('Something went wrong. Please try again.', 'error');
@@ -226,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     box.id = 'order-confirmation';
     box.innerHTML = `
       <div class="confirm-inner">
-        <div class="confirm-icon">✅</div>
+        <div class="confirm-icon"><i class="fa-solid fa-circle-check" style="color: rgb(2, 255, 23);"></i></div>
         <h2>Order Placed!</h2>
         <p>Your order ID is:</p>
         <div class="confirm-id">${orderId}</div>
@@ -248,6 +250,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(t);
     setTimeout(() => t.classList.add('bb-toast-show'), 10);
     setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3500);
+  }
+
+  // ── Save order ID to device permanently ──
+  function saveOrderIdLocally(orderId) {
+    try {
+      const existing = JSON.parse(localStorage.getItem('bb_my_orders') || '[]');
+      if (!existing.includes(orderId)) {
+        existing.unshift(orderId); // newest first
+        localStorage.setItem('bb_my_orders', JSON.stringify(existing));
+      }
+    } catch(e) {}
   }
 
   // Page transition

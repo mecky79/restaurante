@@ -351,10 +351,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ══════════════════════════════════════════
   // MENU MANAGER (local)
   // ══════════════════════════════════════════
-  const CAT_LABELS = {
-    'fast-food':'🍟 Fast Food','quick-bites':'🍕 Quick Bites','bakery':'🧁 Bakery Treats',
-    'special':'🎂 Special Orders','drinks':'🥤 Drinks','combos':'⭐ Combo Deals',
-  };
+   const CAT_LABELS = {
+  'fast-food':  '<i class="fas fa-burger"></i> Fast Food',
+  'quick-bites':'<i class="fas fa-pizza-slice"></i> Quick Bites',
+  'bakery':     '<i class="fas fa-cake-candles"></i> Bakery Treats',
+  'special':    '<i class="fas fa-star"></i> Special Orders',
+  'drinks':     '<i class="fas fa-mug-saucer"></i> Drinks',
+  'combos':     '<i class="fas fa-fire"></i> Combo Deals',
+};
 
   function renderMenuMgr() {
     const menu      = DB.getMenu();
