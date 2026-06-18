@@ -1,4 +1,4 @@
-// =============================================
+ // =============================================
 // db.js — Bakes and Bites
 // Supabase cloud database layer
 // =============================================
@@ -43,7 +43,7 @@ var DB = (() => {
     return 'BB-' + ts + '-' + rand;
   }
 
-  // ── Default menu (local — not stored in DB) ──
+  // ── Default menu ──────────────────────────
   const DEFAULT_MENU = {
     'fast-food': [
       { id:'classic-burger',  name:'Classic Burger',         price:250  },
@@ -85,12 +85,7 @@ var DB = (() => {
     ],
   };
 
-  // Menu and stock stay in localStorage (admin-only, device-specific)
-  const LOCAL_KEYS = {
-    menu:  'bb_menu',
-    stock: 'bb_stock',
-  };
-
+  // ── Local storage helpers ─────────────────
   function localGet(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
   }
@@ -100,12 +95,11 @@ var DB = (() => {
 
   // ── Init ──────────────────────────────────
   function init() {
-    if (!localGet(LOCAL_KEYS.menu)) localSet(LOCAL_KEYS.menu, DEFAULT_MENU);
-    const stock = localGet(LOCAL_KEYS.stock);
-    if (!stock) {
+    if (!localGet('bb_menu'))  localSet('bb_menu', DEFAULT_MENU);
+    if (!localGet('bb_stock')) {
       const s = {};
       Object.values(DEFAULT_MENU).flat().forEach(item => { s[item.id] = 50; });
-      localSet(LOCAL_KEYS.stock, s);
+      localSet('bb_stock', s);
     }
   }
 
@@ -113,63 +107,63 @@ var DB = (() => {
   // ORDERS
   // ══════════════════════════════════════════
   async function saveOrder(orderData) {
-    const id = generateID();
+    const id  = generateID();
     const row = {
       id,
-      status:       'Pending',
-      customer:     orderData.customer,
-      items:        orderData.items,
-      total:        orderData.total || 0,
-      instructions: orderData.instructions || '',
-      location:     orderData.location || '',
+      status:        'Pending',
+      customer:      orderData.customer,
+      items:         orderData.items,
+      total:         orderData.total || 0,
+      instructions:  orderData.instructions || '',
+      location:      orderData.location || '',
       delivery_note: '',
     };
 
     const result = await query('orders', {
       method: 'POST',
-      body: JSON.stringify(row),
+      body:   JSON.stringify(row),
     });
 
-     if (result) {
-  // Deduct stock locally
-  orderData.items.forEach(item => deductStock(item.id, item.qty));
+    if (result) {
+      // Deduct stock locally
+      orderData.items.forEach(item => deductStock(item.id, item.qty));
 
-  // Save notification
-  await addNotification({
-    type:     'order',
-    message:  `New order ${id} from ${orderData.customer.name} — KSh ${(orderData.total || 0).toLocaleString()}`,
-    order_id: id,
-    read:     false,
-  });
+      // Save notification
+      await addNotification({
+        type:     'order',
+        message:  'New order ' + id + ' from ' + orderData.customer.name + ' — KSh ' + (orderData.total || 0).toLocaleString(),
+        order_id: id,
+        read:     false,
+      });
 
-  // Send email notifications
-  try {
-    await fetch('https://oyrubwniizgwsweggegc.supabase.co/functions/v1/send-order-email', {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cnVid25paXpnd3N3ZWdnZWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjQ5OTUsImV4cCI6MjA5NzE0MDk5NX0.btv71sMVs9ABVLfc7ErRKXutuFZTUIaUqClqRJ-TSiY',
-      },
-      body: JSON.stringify({
-        order: {
-          id,
-          timestamp:    new Date().toISOString(),
-          status:       'Pending',
-          customer:     orderData.customer,
-          items:        orderData.items,
-          total:        orderData.total || 0,
-          instructions: orderData.instructions || '',
-          location:     orderData.location || '',
-        },
-      }),
-    });
-  } catch(e) {
-    // Email failure should never block the order
-    console.error('Email notification failed:', e);
+      // Send email notifications
+      try {
+        await fetch(SUPABASE_URL + '/functions/v1/send-order-email', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+          },
+          body: JSON.stringify({
+            order: {
+              id,
+              timestamp:    new Date().toISOString(),
+              status:       'Pending',
+              customer:     orderData.customer,
+              items:        orderData.items,
+              total:        orderData.total || 0,
+              instructions: orderData.instructions || '',
+              location:     orderData.location || '',
+            },
+          }),
+        });
+      } catch(e) {
+        console.error('Email notification failed:', e);
+      }
+    }
+
+    return result ? id : null;
   }
-return result ? id : null;
-}
-
 
   async function getOrders() {
     const data = await query('orders?order=timestamp.desc');
@@ -181,7 +175,7 @@ return result ? id : null;
     if (deliveryNote !== undefined) body.delivery_note = deliveryNote;
     await query('orders?id=eq.' + encodeURIComponent(orderId), {
       method: 'PATCH',
-      body: JSON.stringify(body),
+      body:   JSON.stringify(body),
     });
   }
 
@@ -191,10 +185,10 @@ return result ? id : null;
   }
 
   async function getRevenue() {
-    const orders = await getOrders();
-    const total      = orders.reduce((s, o) => s + (o.total || 0), 0);
-    const delivered  = orders.filter(o => o.status === 'Delivered');
-    const confirmed  = delivered.reduce((s, o) => s + (o.total || 0), 0);
+    const orders    = await getOrders();
+    const total     = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const delivered = orders.filter(o => o.status === 'Delivered');
+    const confirmed = delivered.reduce((s, o) => s + (o.total || 0), 0);
     return {
       total,
       confirmed,
@@ -207,10 +201,10 @@ return result ? id : null;
   // COMMENTS
   // ══════════════════════════════════════════
   async function saveComment(text, author) {
-    const row = { author: author || 'Anonymous', text };
+    const row    = { author: author || 'Anonymous', text };
     const result = await query('comments', {
       method: 'POST',
-      body: JSON.stringify(row),
+      body:   JSON.stringify(row),
     });
     return result ? result[0] : null;
   }
@@ -224,49 +218,32 @@ return result ? id : null;
   // ANALYTICS
   // ══════════════════════════════════════════
   async function trackPageView() {
-    await query('analytics?id=eq.1', {
-      method: 'PATCH',
-      headers: { 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ page_views: null }), // handled via RPC below
-    });
-    // Use raw SQL increment via RPC
-    await fetch(SUPABASE_URL + '/rest/v1/rpc/increment_page_views', {
-      method: 'POST',
-      headers: { ...HEADERS, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({}),
-    }).catch(() => {
-      // Fallback: read then write
-      _incrementAnalytics('page_views');
-    });
+    await _incrementAnalytics('page_views');
   }
 
   async function trackOrderClick() {
-    await fetch(SUPABASE_URL + '/rest/v1/rpc/increment_order_clicks', {
-      method: 'POST',
-      headers: { ...HEADERS, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({}),
-    }).catch(() => {
-      _incrementAnalytics('order_clicks');
-    });
+    await _incrementAnalytics('order_clicks');
   }
 
   async function _incrementAnalytics(field) {
     const data = await query('analytics?id=eq.1');
     if (data && data.length) {
       const current = data[0][field] || 0;
-      const body = {};
-      body[field] = current + 1;
+      const body    = {};
+      body[field]   = current + 1;
       await query('analytics?id=eq.1', {
-        method: 'PATCH',
-        headers: { 'Prefer': 'return=minimal' },
-        body: JSON.stringify(body),
+        method:  'PATCH',
+        headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+        body:    JSON.stringify(body),
       });
     }
   }
 
   async function getAnalytics() {
     const data = await query('analytics?id=eq.1');
-    return (data && data.length) ? { pageViews: data[0].page_views, orderClicks: data[0].order_clicks } : { pageViews: 0, orderClicks: 0 };
+    return (data && data.length)
+      ? { pageViews: data[0].page_views, orderClicks: data[0].order_clicks }
+      : { pageViews: 0, orderClicks: 0 };
   }
 
   // ══════════════════════════════════════════
@@ -275,7 +252,7 @@ return result ? id : null;
   async function addNotification(n) {
     await query('notifications', {
       method: 'POST',
-      body: JSON.stringify(n),
+      body:   JSON.stringify(n),
     });
   }
 
@@ -286,92 +263,86 @@ return result ? id : null;
 
   async function markNotificationsRead() {
     await query('notifications?read=eq.false', {
-      method: 'PATCH',
-      headers: { 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ read: true }),
+      method:  'PATCH',
+      headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ read: true }),
     });
   }
 
   async function getUnreadCount() {
-    const data = await query(
-      'notifications?read=eq.false&select=id',
-      { headers: { ...HEADERS, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' } }
-    );
+    const data = await query('notifications?read=eq.false&select=id');
     return Array.isArray(data) ? data.length : 0;
   }
 
   // ══════════════════════════════════════════
-  // MENU (localStorage — admin device only)
+  // MENU (localStorage)
   // ══════════════════════════════════════════
-  function getMenu() {
-    return localGet(LOCAL_KEYS.menu) || DEFAULT_MENU;
-  }
+  function getMenu()    { return localGet('bb_menu') || DEFAULT_MENU; }
+
   function updateMenuItem(category, itemId, newData) {
     const menu = getMenu();
     if (!menu[category]) return;
-    const idx = menu[category].findIndex(i => i.id === itemId);
+    const idx  = menu[category].findIndex(i => i.id === itemId);
     if (idx !== -1) menu[category][idx] = { ...menu[category][idx], ...newData };
-    localSet(LOCAL_KEYS.menu, menu);
+    localSet('bb_menu', menu);
   }
+
   function addMenuItem(category, item) {
     const menu = getMenu();
     if (!menu[category]) menu[category] = [];
-    item.id = category + '-' + Date.now();
+    item.id    = category + '-' + Date.now();
     menu[category].push(item);
-    localSet(LOCAL_KEYS.menu, menu);
+    localSet('bb_menu', menu);
   }
+
   function deleteMenuItem(category, itemId) {
     const menu = getMenu();
     if (!menu[category]) return;
     menu[category] = menu[category].filter(i => i.id !== itemId);
-    localSet(LOCAL_KEYS.menu, menu);
+    localSet('bb_menu', menu);
   }
 
   // ══════════════════════════════════════════
-  // STOCK (localStorage — admin device only)
+  // STOCK (localStorage)
   // ══════════════════════════════════════════
   function getStock() {
-    const s = localGet(LOCAL_KEYS.stock);
+    const s = localGet('bb_stock');
     if (s) return s;
     const def = {};
     Object.values(DEFAULT_MENU).flat().forEach(item => { def[item.id] = 50; });
     return def;
   }
+
   function updateStock(itemId, qty) {
-    const stock = getStock();
-    stock[itemId] = qty;
-    localSet(LOCAL_KEYS.stock, stock);
+    const stock    = getStock();
+    stock[itemId]  = qty;
+    localSet('bb_stock', stock);
   }
+
   function deductStock(itemId, qty) {
-    const stock = getStock();
-    stock[itemId] = Math.max(0, (stock[itemId] || 0) - qty);
-    localSet(LOCAL_KEYS.stock, stock);
+    const stock    = getStock();
+    stock[itemId]  = Math.max(0, (stock[itemId] || 0) - qty);
+    localSet('bb_stock', stock);
   }
 
   // ══════════════════════════════════════════
   // SLIDER IMAGES (localStorage)
   // ══════════════════════════════════════════
-  function getSliderImages()    { return localGet('bb_slider_images') || []; }
-  function saveSliderImages(arr){ localSet('bb_slider_images', arr); }
+  function getSliderImages()     { return localGet('bb_slider_images') || []; }
+  function saveSliderImages(arr) { localSet('bb_slider_images', arr); }
 
   // ── Public API ────────────────────────────
   return {
     init,
     generateID,
-    // orders (async)
     saveOrder, getOrders, updateOrderStatus, getOrderById, getRevenue,
-    // comments (async)
     saveComment, getComments,
-    // analytics (async)
     trackPageView, trackOrderClick, getAnalytics,
-    // notifications (async)
     addNotification, getNotifications, markNotificationsRead, getUnreadCount,
-    // menu (sync, local)
     getMenu, updateMenuItem, addMenuItem, deleteMenuItem,
-    // stock (sync, local)
     getStock, updateStock, deductStock,
-    // slider (sync, local)
     getSliderImages, saveSliderImages,
     DEFAULT_MENU,
   };
+
 })();
