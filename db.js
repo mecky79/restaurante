@@ -130,21 +130,46 @@ var DB = (() => {
       body: JSON.stringify(row),
     });
 
-    if (result) {
-      // Deduct stock locally
-      orderData.items.forEach(item => deductStock(item.id, item.qty));
+     if (result) {
+  // Deduct stock locally
+  orderData.items.forEach(item => deductStock(item.id, item.qty));
 
-      // Save notification
-      await addNotification({
-        type:     'order',
-        message:  `New order ${id} from ${orderData.customer.name} — KSh ${(orderData.total || 0).toLocaleString()}`,
-        order_id: id,
-        read:     false,
-      });
-    }
+  // Save notification
+  await addNotification({
+    type:     'order',
+    message:  `New order ${id} from ${orderData.customer.name} — KSh ${(orderData.total || 0).toLocaleString()}`,
+    order_id: id,
+    read:     false,
+  });
 
-    return result ? id : null;
+  // Send email notifications
+  try {
+    await fetch('https://oyrubwniizgwsweggegc.supabase.co/functions/v1/send-order-email', {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95cnVid25paXpnd3N3ZWdnZWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjQ5OTUsImV4cCI6MjA5NzE0MDk5NX0.btv71sMVs9ABVLfc7ErRKXutuFZTUIaUqClqRJ-TSiY',
+      },
+      body: JSON.stringify({
+        order: {
+          id,
+          timestamp:    new Date().toISOString(),
+          status:       'Pending',
+          customer:     orderData.customer,
+          items:        orderData.items,
+          total:        orderData.total || 0,
+          instructions: orderData.instructions || '',
+          location:     orderData.location || '',
+        },
+      }),
+    });
+  } catch(e) {
+    // Email failure should never block the order
+    console.error('Email notification failed:', e);
   }
+}
+
+return result ? id : null;
 
   async function getOrders() {
     const data = await query('orders?order=timestamp.desc');
