@@ -167,9 +167,9 @@ var DB = (() => {
     // Email failure should never block the order
     console.error('Email notification failed:', e);
   }
+return result ? id : null;
 }
 
-return result ? id : null;
 
   async function getOrders() {
     const data = await query('orders?order=timestamp.desc');
