@@ -167,6 +167,18 @@
       <legend><i class="fa-solid fa-comments" style="color: rgb(72, 36, 4);"></i> Leave a Comment</legend>
       <label for="comment-author">Your Name</label>
       <input type="text" id="comment-author" placeholder="e.g. Jane Doe">
+
+      <!--STAR RATING-->
+      <label>Your Rating</label>
+      <div class="star-rating" id="star-rating">
+        <span class="star" data-value="1">★</span>
+        <span class="star" data-value="2">★</span>
+        <span class="star" data-value="3">★</span>
+        <span class="star" data-value="4">★</span>
+        <span class="star" data-value="5">★</span>
+      </div>
+      <input type="hidden" id="comment-rating" value="0">
+
       <label for="comment-text">Your Comment</label>
       <textarea id="comment-text" placeholder="Rate your experience with us..."></textarea>
       <button type="button" class="submit-btn" id="comment-btn">Submit Comment</button>
@@ -240,13 +252,40 @@
       window.showToast = function(msg, type) {
         const t = document.createElement('div');
         t.className = 'bb-toast bb-toast-' + (type || 'info');
-        t.textContent = msg;
+        t.innerHTML = msg;
         document.body.appendChild(t);
         setTimeout(() => t.classList.add('bb-toast-show'), 10);
         setTimeout(() => { t.classList.remove('bb-toast-show'); setTimeout(() => t.remove(), 300); }, 3500);
       };
 
+       
+      // ── Star rating ────────────────────────
+      let selectedRating = 0;
+      document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('mouseover', () => {
+          document.querySelectorAll('.star').forEach(s => {
+            s.classList.toggle('star-hover', s.dataset.value <= star.dataset.value);
+          });
+        });
+        star.addEventListener('mouseout', () => {
+          document.querySelectorAll('.star').forEach(s => s.classList.remove('star-hover'));
+        });
+        star.addEventListener('click', () => {
+          selectedRating = parseInt(star.dataset.value);
+          document.getElementById('comment-rating').value = selectedRating;
+          document.querySelectorAll('.star').forEach(s => {
+            s.classList.toggle('star-selected', s.dataset.value <= selectedRating);
+          });
+        });
+      });
+
       // ── Comments ───────────────────────────
+      function renderStars(rating) {
+        return [1,2,3,4,5].map(i =>
+          `<span class="star-display ${i <= rating ? 'star-filled' : 'star-empty'}">★</span>`
+        ).join('');
+      }
+
       async function renderComments() {
         const list     = document.getElementById('comments-list');
         list.innerHTML = '<p class="cart-empty" style="opacity:.5">Loading comments...</p>';
@@ -263,6 +302,7 @@
               <span class="comment-author">${escHtml(c.author)}</span>
               <span class="comment-date">${dateStr}</span>
             </div>
+            ${c.rating ? `<div class="comment-stars">${renderStars(c.rating)}</div>` : ''}
             <p class="comment-body">${escHtml(c.text)}</p>
           </div>`;
         }).join('');
@@ -271,13 +311,14 @@
       document.getElementById('comment-btn').addEventListener('click', async () => {
         const author  = document.getElementById('comment-author').value.trim() || 'Anonymous';
         const text    = document.getElementById('comment-text').value.trim();
+        const rating  = parseInt(document.getElementById('comment-rating').value) || 0;
         if (!text) { showToast('Please write a comment first.', 'error'); return; }
 
         const btn = document.getElementById('comment-btn');
         btn.disabled    = true;
-        btn.innerHTML = '<i class="fa-solid fa-hourglass-half" style="color: rgb(111, 72, 3);"></i> Posting...';
+        btn.textContent = 'Posting...';
 
-        const result = await DB.saveComment(text, author);
+        const result = await DB.saveComment(text, author, rating);
 
         btn.disabled    = false;
         btn.textContent = 'Submit Comment';
@@ -285,6 +326,9 @@
         if (result) {
           document.getElementById('comment-author').value = '';
           document.getElementById('comment-text').value   = '';
+          document.getElementById('comment-rating').value = '0';
+          selectedRating = 0;
+          document.querySelectorAll('.star').forEach(s => s.classList.remove('star-selected'));
           await renderComments();
           showToast('Comment posted!', 'success');
           document.getElementById('comments-display').scrollIntoView({ behavior:'smooth', block:'nearest' });
@@ -296,64 +340,114 @@
       await renderComments();
 
       // ── Order tracking ─────────────────────
-       // ── Order tracking ─────────────────────
-function buildTrackCard(order) {
-  const sClass = {
-    'Pending':'status-pending','Confirmed':'status-confirmed','Preparing':'status-preparing',
-    'Out for Delivery':'status-delivering','Delivered':'status-delivered','Cancelled':'status-cancelled',
-  }[order.status] || 'status-pending';
+       function buildTrackCard(order) {
+        const sClass = {
+          'Pending':'status-pending','Confirmed':'status-confirmed','Preparing':'status-preparing',
+          'Out for Delivery':'status-delivering','Delivered':'status-delivered','Cancelled':'status-cancelled',
+        }[order.status] || 'status-pending';
 
-  const steps   = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
-  const stepIdx = steps.indexOf(order.status);
+        const steps   = ['Pending','Confirmed','Preparing','Out for Delivery','Delivered'];
+        const stepIdx = steps.indexOf(order.status);
 
-  return `
-    <div class="track-card">
-      <div class="track-order-id">Order: ${escHtml(order.id)}</div>
-      <div class="track-customer">${escHtml(order.customer && order.customer.name)} — ${escHtml(order.location)}</div>
-      <div class="track-status-badge ${sClass}">${escHtml(order.status)}</div>
-      <div class="track-progress">
-        ${steps.map((s, i) => `
-          <div class="track-step
-            ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''}
-            ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
-            <div class="step-dot"></div>
-            <span>${s}</span>
+        // Show cancel button only if order hasn't been prepared yet
+        const canCancel = ['Pending','Confirmed'].includes(order.status);
+
+        // Show delivered button only if out for delivery
+        const canMarkDelivered = order.status === 'Out for Delivery';
+
+        return `
+          <div class="track-card" id="track-card-${escHtml(order.id)}">
+            <div class="track-order-id">Order: ${escHtml(order.id)}</div>
+            <div class="track-customer">${escHtml(order.customer && order.customer.name)} — ${escHtml(order.location)}</div>
+            <div class="track-status-badge ${sClass}">${escHtml(order.status)}</div>
+            <div class="track-progress">
+              ${steps.map((s, i) => `
+                <div class="track-step
+                  ${i <= stepIdx && order.status !== 'Cancelled' ? 'step-done' : ''}
+                  ${i === stepIdx && order.status !== 'Cancelled' ? 'step-current' : ''}">
+                  <div class="step-dot"></div>
+                  <span>${s}</span>
+                </div>
+              `).join('')}
+            </div>
+            ${order.delivery_note ? `<p class="track-note"><i class="fa-solid fa-note-sticky"></i> ${escHtml(order.delivery_note)}</p>` : ''}
+            <div class="track-items">
+              ${(order.items||[]).map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
+            </div>
+            <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
+
+            <!-- Customer action buttons -->
+            <div class="track-customer-actions">
+              ${canMarkDelivered ? `
+                <button class="track-delivered-btn" onclick="customerMarkDelivered('${escHtml(order.id)}')">
+                  <i class="fa-solid fa-circle-check"></i> I Received My Order
+                </button>
+              ` : ''}
+              ${canCancel ? `
+                <button class="track-cancel-btn" onclick="customerCancelOrder('${escHtml(order.id)}')">
+                  <i class="fa-solid fa-xmark"></i> Cancel Order
+                </button>
+              ` : ''}
+              ${order.status === 'Cancelled' ? `
+                <p class="track-cancelled-note">This order was cancelled.</p>
+              ` : ''}
+              ${order.status === 'Delivered' ? `
+                <p class="track-delivered-note"><i class="fa-solid fa-circle-check"></i> Order delivered. Enjoy your meal!</p>
+              ` : ''}
+            </div>
           </div>
-        `).join('')}
-      </div>
-      ${order.delivery_note ? `<p class="track-note"><i class="fa-solid fa-bell" style="color: rgb(255, 200, 20);"></i> ${escHtml(order.delivery_note)}</p>` : ''}
-      <div class="track-items">
-        ${(order.items||[]).map(it => `<span class="track-item-chip">${escHtml(it.name)} x${it.qty}</span>`).join('')}
-      </div>
-      <div class="track-total">Total: KSh ${(order.total||0).toLocaleString()}</div>
-    </div>
-  `;
-}
+        `;
+      }
 
-async function loadMyOrders() {
-  const myOrdersList = document.getElementById('my-orders-list');
-  try {
-    const savedIds = JSON.parse(localStorage.getItem('bb_my_orders') || '[]');
-    if (!savedIds.length) {
-      myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">No orders from this device yet.</p>';
-      return;
-    }
-    myOrdersList.innerHTML = '<p style="color:var(--gold-light);text-align:center;font-size:0.85rem">⏳ Loading your orders...</p>';
-    const orders = await Promise.all(savedIds.map(id => DB.getOrderById(id)));
-    const valid  = orders.filter(Boolean);
-    if (!valid.length) {
-      myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">Could not load orders. Try using your Order ID below.</p>';
-      return;
-    }
-    myOrdersList.innerHTML = valid.map(buildTrackCard).join('');
-  } catch(e) {
-    myOrdersList.innerHTML = '<p class="track-error" style="text-align:center">Failed to load orders.</p>';
-  }
-}
+      // Customer marks order as delivered
+      window.customerMarkDelivered = async function(orderId) {
+        if (!confirm('Confirm you have received your order?')) return;
+        await DB.updateOrderStatus(orderId, 'Delivered');
+        showToast(
+  'Thank you! Enjoy your meal <i class="fa-solid fa-face-grin-beam" style="color: rgb(241, 205, 1);"></i>',
+  'success'
+);
+        await loadMyOrders();
+      };
 
-await loadMyOrders();
-setInterval(loadMyOrders, 30000);
+      // Customer cancels order
+      window.customerCancelOrder = async function(orderId) {
+        if (!confirm('Are you sure you want to cancel this order?')) return;
+        await DB.updateOrderStatus(orderId, 'Cancelled');
+        showToast('Order cancelled.', 'info');
+        await loadMyOrders();
+      };
 
+      // Auto-load orders from this device
+      async function loadMyOrders() {
+        const myOrdersList = document.getElementById('my-orders-list');
+        try {
+          const savedIds = JSON.parse(localStorage.getItem('bb_my_orders') || '[]');
+          if (!savedIds.length) {
+            myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">No orders from this device yet.</p>';
+            return;
+          }
+          myOrdersList.innerHTML = '<p style="color:var(--gold-light);text-align:center;font-size:0.85rem">⏳ Loading your orders...</p>';
+
+          // Fetch all orders in parallel
+          const orders = await Promise.all(savedIds.map(id => DB.getOrderById(id)));
+          const valid  = orders.filter(Boolean);
+
+          if (!valid.length) {
+            myOrdersList.innerHTML = '<p class="cart-empty" style="text-align:center">Could not load orders. Try using your Order ID below.</p>';
+            return;
+          }
+          myOrdersList.innerHTML = valid.map(buildTrackCard).join('');
+        } catch(e) {
+          myOrdersList.innerHTML = '<p class="track-error" style="text-align:center">Failed to load orders.</p>';
+        }
+      }
+
+      await loadMyOrders();
+
+      // Refresh order statuses every 15 seconds automatically
+      setInterval(loadMyOrders, 15000);
+ 
 document.getElementById('track-btn').addEventListener('click', trackByID);
 document.getElementById('track-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') trackByID();

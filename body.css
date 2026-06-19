@@ -1,4 +1,4 @@
- /* =============================================
+/* =============================================
    BAKES AND BITES — body.css
    Shared styles: index.html + order.html
    ============================================= */
@@ -1246,3 +1246,97 @@ textarea:focus {
   text-align: left;
 }
 
+/* =============================================
+   STAR RATING — comment input
+   ============================================= */
+.star-rating {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.star-rating .star {
+  font-size: 2rem;
+  color: rgba(253,240,220,0.2);
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+.star-rating .star:hover,
+.star-rating .star.star-hover {
+  color: var(--gold-light);
+  transform: scale(1.15);
+}
+.star-rating .star.star-selected {
+  color: var(--gold);
+}
+
+/* Stars on comment display cards */
+.comment-stars {
+  display: flex;
+  gap: 3px;
+  margin: 4px 0 6px;
+}
+.star-display { font-size: 1rem; }
+.star-filled  { color: var(--gold); }
+.star-empty   { color: rgba(253,240,220,0.2); }
+
+/* =============================================
+   CUSTOMER TRACK ACTION BUTTONS
+   ============================================= */
+.track-customer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(232,168,56,0.15);
+}
+.track-delivered-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(90deg, #1a7a3a, #2ecc71);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(46,204,113,0.3);
+}
+.track-delivered-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(46,204,113,0.45);
+}
+.track-cancel-btn {
+  width: 100%;
+  padding: 12px;
+  background: rgba(176,58,46,0.15);
+  color: #e74c3c;
+  border: 1.5px solid rgba(176,58,46,0.4);
+  border-radius: 30px;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.track-cancel-btn:hover {
+  background: rgba(176,58,46,0.3);
+  transform: translateY(-2px);
+}
+.track-cancelled-note {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  text-align: center;
+  font-style: italic;
+}
+.track-delivered-note {
+  color: #2ecc71;
+  font-size: 0.85rem;
+  text-align: center;
+  font-weight: 600;
+}

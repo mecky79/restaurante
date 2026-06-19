@@ -1,4 +1,4 @@
- // =============================================
+  // =============================================
 // db.js — Bakes and Bites
 // Supabase cloud database layer
 // =============================================
@@ -200,8 +200,8 @@ var DB = (() => {
   // ══════════════════════════════════════════
   // COMMENTS
   // ══════════════════════════════════════════
-  async function saveComment(text, author) {
-    const row    = { author: author || 'Anonymous', text };
+   async function saveComment(text, author, rating) {
+    const row    = { author: author || 'Anonymous', text, rating: rating || 0 };
     const result = await query('comments', {
       method: 'POST',
       body:   JSON.stringify(row),
